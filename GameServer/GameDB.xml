@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GameDB>
+	<Table name="Msg" desc="메시지 테이블">
+		<Column name="id" type="int" notnull="true" identity="1,1"/>
+		<Column name="msg" type="nvarchar(200)" notnull="false"/>
+		<Column name="name" type="nvarchar(100)" notnull="false"/>
+		<Index type="clustered">
+			<PrimaryKey/>
+			<Column name="id"/>
+		</Index>
+	</Table>
+	<Procedure name="spInsertMsg">
+		<Param name="@msg" type="nvarchar(200)"/>
+		<Param name="@name" type="nvarchar(100)"/>
+		<Body>
+			<![CDATA[ INSERT INTO [dbo].[Msg]([msg], [name]) VALUES(@msg, @name); ]]>
+		</Body>
+	</Procedure>
+	<Procedure name="spGetMsg">
+		<Param name="@id" type="int"/>
+		<Body>
+			<![CDATA[ SELECT id, msg, name FROM [dbo].[Msg] WHERE id BETWEEN 1 AND (@id) ]]>
+		</Body>
+	</Procedure>
+	<Procedure name="spGetAllMsg">
+		<Param name="@id" type="int"/>
+		<Body>
+			<![CDATA[ SELECT id, msg, name FROM [dbo].[Msg] WHERE id >= 1 ]]>
+		</Body>
+	</Procedure>
+</GameDB>
