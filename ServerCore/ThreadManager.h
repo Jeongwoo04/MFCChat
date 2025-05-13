@@ -22,6 +22,7 @@ public:
 	static void DoGlobalQueueWork();
 	static void DoGDBJobQueueWork();
 	static void DistributeReservedJobs();
+	static void DistributeReservedDBJobs();
 
 
 private:

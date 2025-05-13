@@ -100,7 +100,7 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 
 	wcout << L"Send To Room) Name[" << wNameCopy << L"] Msg[" << wMsgCopy << L"]" << endl;
 	//// 기존 DB save 블로킹 방식에서 -> GDBJobQueue 등록 DBWorker 비동기 처리.
-	GRoom->DoAsync(&Room::DBSave, wNameCopy, wMsgCopy);
+	GRoom->DoDBAsync(&Room::DBSave, wNameCopy, wMsgCopy);
 
 	chatPkt.set_name(pkt.name());
 	chatPkt.set_msg(pkt.msg());

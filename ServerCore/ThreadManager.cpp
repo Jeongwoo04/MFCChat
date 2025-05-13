@@ -2,6 +2,7 @@
 #include "ThreadManager.h"
 #include "JobQueue.h"
 #include "GlobalQueue.h"
+#include "DBConnectionPool.h"
 
 /*------------------
 	ThreadManager
@@ -69,6 +70,8 @@ void ThreadManager::DoGlobalQueueWork()
 
 void ThreadManager::DoGDBJobQueueWork()
 {
+	DBConnection* dbConn = GDBConnectionPool->Pop();
+
 	while (true)
 	{
 		uint64 now = ::GetTickCount64();
@@ -79,8 +82,10 @@ void ThreadManager::DoGDBJobQueueWork()
 		if (jobQueue == nullptr)
 			break;
 
-		jobQueue->Execute();
+		jobQueue->Execute(dbConn);
 	}
+
+	GDBConnectionPool->Push(dbConn);
 }
 
 void ThreadManager::DistributeReservedJobs()
@@ -88,4 +93,11 @@ void ThreadManager::DistributeReservedJobs()
 	const uint64 now = ::GetTickCount64();
 
 	GJobTimer->Distribute(now);
+}
+
+void ThreadManager::DistributeReservedDBJobs()
+{
+	const uint64 now = ::GetTickCount64();
+
+	GDBJobTimer->Distribute(now);
 }

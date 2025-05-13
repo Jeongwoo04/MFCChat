@@ -25,14 +25,10 @@ void Room::Broadcast(SendBufferRef sendBuffer)
 	}
 }
 
-void Room::DBSave(std::wstring wNameCopy, std::wstring wMsgCopy)
+void Room::DBSave(DBConnection* dbConn, std::wstring wNameCopy, std::wstring wMsgCopy)
 {
-	DBConnection* dbConn = GDBConnectionPool->Pop();
-
 	SP::InsertMsg insert(*dbConn);
 	insert.In_Msg(wMsgCopy.c_str(), static_cast<int32>(wMsgCopy.length()));
 	insert.In_Name(wNameCopy.c_str(), static_cast<int32>(wNameCopy.length()));
 	insert.Execute();
-
-	GDBConnectionPool->Push(dbConn);
 }

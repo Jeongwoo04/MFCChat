@@ -36,6 +36,7 @@ void DoWorkerJob(ServerServiceRef& service)
 
 		// 예약된 일감 처리
 		ThreadManager::DistributeReservedJobs();
+		ThreadManager::DistributeReservedDBJobs();
 
 		// 글로벌 큐
 		ThreadManager::DoGlobalQueueWork();
@@ -43,18 +44,18 @@ void DoWorkerJob(ServerServiceRef& service)
 	}
 }
 
-void InitConsole()
-{
-	_setmode(_fileno(stdout), _O_U16TEXT);
-	SetConsoleOutputCP(CP_UTF8);
-}
+//void InitConsole()
+//{
+//	_setmode(_fileno(stdout), _O_U16TEXT);
+//	SetConsoleOutputCP(CP_UTF8);
+//}
 
 int main()
 {
 	ServerGlobal::Init();
-	InitConsole();
+	//InitConsole();
 
-	ASSERT_CRASH(GDBConnectionPool->Connect(1, L"Driver={SQL Server Native Client 11.0};Server=(localdb)\\MSSQLLocalDB;Database=ServerDb;Trusted_Connection=Yes;charset='UTF8'"));
+	ASSERT_CRASH(GDBConnectionPool->Connect(10, L"Driver={SQL Server Native Client 11.0};Server=(localdb)\\MSSQLLocalDB;Database=ServerDb;Trusted_Connection=Yes;charset='UTF8'"));
 	DBConnection* dbConn = GDBConnectionPool->Pop();
 	DBSynchronizer dbSync(*dbConn);
 	dbSync.Synchronize(L"GameDB.xml");

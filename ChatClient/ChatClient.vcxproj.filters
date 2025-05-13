@@ -29,9 +29,6 @@
     <ClInclude Include="framework.h">
       <Filter>Main</Filter>
     </ClInclude>
-    <ClInclude Include="pch.h">
-      <Filter>Main</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Main</Filter>
     </ClInclude>
@@ -50,15 +47,15 @@
     <ClInclude Include="..\GameServer\GenProcedures.h">
       <Filter>DB</Filter>
     </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChatClient.cpp">
       <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="ChatClientDlg.cpp">
-      <Filter>Main</Filter>
-    </ClCompile>
-    <ClCompile Include="pch.cpp">
       <Filter>Main</Filter>
     </ClCompile>
     <ClCompile Include="ServerSession.cpp">
@@ -75,6 +72,12 @@
     </ClCompile>
     <ClCompile Include="..\GameServer\Struct.pb.cc">
       <Filter>Main</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ServerCore\CoreGlobal.cpp">
+      <Filter>Main</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

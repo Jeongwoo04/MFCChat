@@ -9,7 +9,7 @@ public:
 	void Enter(PlayerRef player);
 	void Leave(PlayerRef player);
 	void Broadcast(SendBufferRef sendBuffer);
-	void DBSave(std::wstring name, std::wstring msg);
+	void DBSave(DBConnection* dbConn, std::wstring name, std::wstring msg);
 	//void DBLoad(std::wstring wNameCopy, std::wstring wMsgCopy);
 
 public:

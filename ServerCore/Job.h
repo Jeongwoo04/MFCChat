@@ -1,7 +1,5 @@
 #pragma once
 #include <functional>
-#include "DBConnection.h"
-#include "../GameServer/GenProcedures.h"
 
 /*---------
 	Job
@@ -35,26 +33,3 @@ public:
 private:
 	CallbackType _callback;
 };
-
-//class DBJob : public Job
-//{
-//public:
-//	virtual ~DBJob() override { };
-//	virtual void Execute(DBConnection* dbconn) = 0;
-//};
-//
-//class LambdaDBJob : public DBJob
-//{
-//public:
-//	using DBJobFunc = std::function<void(DBConnection*)>;
-//
-//	LambdaDBJob(DBJobFunc&& func) : _func(std::move(func)) { }
-//
-//	virtual void Execute(DBConnection* dbconn) override
-//	{
-//		_func(dbconn);
-//	}
-//
-//private:
-//	DBJobFunc _func;
-//};

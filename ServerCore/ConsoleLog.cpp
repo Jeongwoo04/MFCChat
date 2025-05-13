@@ -28,8 +28,8 @@ void ConsoleLog::WriteStdOut(Color color, const WCHAR* format, ...)
 	vswprintf(buffer, sizeof(buffer) / sizeof(WCHAR), format, ap);
 	va_end(ap);
 
-	std::wcout.imbue(std::locale("kor"));  // 한국어 로케일 설정
-	std::wcout << buffer << std::endl;
+	//std::wcout.imbue(std::locale("kor"));  // 한국어 로케일 설정
+	//std::wcout << buffer << std::endl;
 
 	// 버퍼 비우기
 	fflush(stdout);
