@@ -278,5 +278,8 @@
     <ClCompile Include="DBJob.cpp">
       <Filter>DB</Filter>
     </ClCompile>
+    <ClCompile Include="Convert.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

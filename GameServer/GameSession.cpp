@@ -10,8 +10,9 @@ void GameSession::OnConnected()
 
 void GameSession::OnDisconnected()
 {
-	GSessionManager->Remove(static_pointer_cast<GameSession>(shared_from_this()));
+	_disconnected.store(true);
 
+	GSessionManager->Remove(static_pointer_cast<GameSession>(shared_from_this()));
 
 	if (_currentPlayer)
 	{
@@ -20,7 +21,6 @@ void GameSession::OnDisconnected()
 	}
 
 	_currentPlayer = nullptr;
-	_players.clear();
 }
 
 void GameSession::OnRecvPacket(BYTE* buffer, int32 len)

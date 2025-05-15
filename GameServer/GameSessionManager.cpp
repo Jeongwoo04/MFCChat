@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "GameSessionManager.h"
 #include "GameSession.h"
+#include "Player.h"
 
 //GameSessionManager GSessionManager;
 
@@ -16,7 +17,7 @@ void GameSessionManager::Remove(GameSessionRef session)
 	_sessions.erase(session);
 }
 
-// Ã¤ÆÃ ÇÁ·Î±×·¥¿¡¼­ Room ¾ÈÀÇ Âü°¡ÀÚ ¸ðµÎ¿¡°Ô º¸¿©Áö°Ô »Ñ¸²
+// Ã¤ÆÃ ÇÁ·Î±×·¥¿¡¼­ ÀüÃ¼ ¸Þ½ÃÁö
 void GameSessionManager::Broadcast(SendBufferRef sendBuffer) // for µ¹¸é¼­ µ¿ÀÏÇÑ µ¥ÀÌÅÍ¸¦ º¸³»ÁÖ°Ú´Ù. (º¹»çºñ¿ë 1¹ø)
 {
 	WRITE_LOCK;
@@ -24,4 +25,22 @@ void GameSessionManager::Broadcast(SendBufferRef sendBuffer) // for µ¹¸é¼­ µ¿ÀÏÇ
 	{
 		session->Send(sendBuffer); // -> loop Å»¶§ _sessions¸¦ °Çµå¸®´ÂÁö Á¶½É !
 	}
+}
+
+void GameSessionManager::CheckClientAlive(const Set<GameSessionRef>& sessions)
+{
+    const uint64_t timeoutMs = 15000; // 15ÃÊ ÀÌ»ó ÀÀ´ä ¾øÀ¸¸é ²÷±è Ã³¸®
+    uint64_t now = GetTickCount64();
+
+    for (auto& session : sessions)
+    {
+        if (!session->IsTimeOut(now))
+        {
+            // ²÷±è °¨Áö: ¼¼¼Ç °­Á¦ Á¾·á Ã³¸®
+            session->Disconnect(L"TimeOut");
+
+            // ·Î±× ³²±â±â
+            std::cout << "Session disconnected due to timeout. PlayerId: " << session->_currentPlayer->playerId << std::endl;
+        }
+    }
 }

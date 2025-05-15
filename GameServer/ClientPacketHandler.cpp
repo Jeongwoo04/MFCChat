@@ -11,7 +11,6 @@
 #include "DBSynchronizer.h"
 #include "GenProcedures.h"
 #include "GlobalQueue.h"
-#include "Convert.h"
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
@@ -30,65 +29,36 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 	if (gameSession->_currentPlayer != nullptr)
 		return false;
 
-	Protocol::S_LOGIN loginPkt;
-	loginPkt.set_success(true);
+	// DB Job ( 내부에서 Room::Enter )
 
+	// Temp
 	static Atomic<uint64> idGenerator = 1;
-
-	auto player = loginPkt.add_players();
-
-	//memory
 	PlayerRef playerRef = MakeShared<Player>();
 	playerRef->playerId = idGenerator++;
 	playerRef->name = pkt.name();
-	playerRef->ownerSession = gameSession; 
-	gameSession->_players.push_back(playerRef);
+	playerRef->ownerSession = gameSession;
 
-	uint64 index = pkt.playerindex();
-	gameSession->_currentPlayer = gameSession->_players[index];
+	gameSession->_currentPlayer = playerRef;
 
 	gameSession->_room = GRoom;
 
-	GRoom->DoAsync(&Room::Enter, gameSession->_currentPlayer);
-
-	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(loginPkt);
-	gameSession->_currentPlayer->ownerSession->Send(sendBuffer);
-
-	return true;
-}
-
-bool Handle_C_ENTER_CHAT(PacketSessionRef& session, Protocol::C_ENTER_CHAT& pkt)
-{
-	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
-	// TODO : Validation
-
-	// 답장
-	Protocol::S_ENTER_CHAT enterChatPkt;
-	enterChatPkt.set_success(true);
-	
-	WCHAR convertName[100] = { 0 };
-	if (!UTF8ToWCHARArray(convertName, pkt.name()))
-		return false;
-
-	enterChatPkt.set_msg(u8"[" + gameSession->_currentPlayer->name + u8"] 님이 채팅방에 입장하셨습니다");
-	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(enterChatPkt);
-	
-	GRoom->DoAsync(&Room::Broadcast, sendBuffer);
+	GRoom->DoAsync(&Room::Enter, gameSession);
 
 	return true;
 }
 
 bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 {
-	Protocol::S_CHAT chatPkt;
-	
+	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
+	PlayerRef player = gameSession->_currentPlayer;
+
 	WCHAR convertName[50] = { 0 };
 	WCHAR convertMsg[100] = { 0 };
 
-	if (!UTF8ToWCHARArray(convertName, pkt.name()))
+	if (!Convert::UTF8ToWCHARArray(convertName, player->name))
 		return false;
 
-	if (!UTF8ToWCHARArray(convertMsg, pkt.msg()) || wcslen(convertMsg) == 0)
+	if (!Convert::UTF8ToWCHARArray(convertMsg, pkt.message()) || wcslen(convertMsg) == 0)
 		return false;
 
 	int32 lenName = static_cast<int32>(wcslen(convertName));
@@ -102,8 +72,10 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 	//// 기존 DB save 블로킹 방식에서 -> GDBJobQueue 등록 DBWorker 비동기 처리.
 	GRoom->DoDBAsync(&Room::DBSave, wNameCopy, wMsgCopy);
 
-	chatPkt.set_name(pkt.name());
-	chatPkt.set_msg(pkt.msg());
+	Protocol::S_CHAT chatPkt;
+
+	chatPkt.set_name(player->name);
+	chatPkt.set_message(pkt.message());
 	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(chatPkt);
 
 	GRoom->DoAsync(&Room::Broadcast, sendBuffer);
@@ -111,31 +83,28 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 	return true;
 }
 
-bool Handle_C_REQUEST_HISTORY_CHAT(PacketSessionRef& session, Protocol::C_REQUEST_HISTORY_CHAT& pkt)
+bool Handle_C_LEAVE(PacketSessionRef& session, Protocol::C_LEAVE& pkt)
 {
-	Protocol::S_REQUEST_HISTORY_CHAT requestHistoryPkt;
+	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
+	PlayerRef player = gameSession->_currentPlayer;
 
-	{
-		DBConnection* dbConn = GDBConnectionPool->Pop();
-		SP::GetAllMsg GetHistory(*dbConn);
-		GetHistory.In_Id(0);
+	GRoom->DoAsync(&Room::Leave, player);
+	return true;
+}
 
-		int32 id = 0;
-		WCHAR name[100] = { 0 };
-		WCHAR msg[200] = { 0 };;
+bool Handle_C_PING(PacketSessionRef& session, Protocol::C_PING& pkt)
+{
+	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
 
-		GetHistory.Out_Id(OUT id);
-		GetHistory.Out_Name(OUT name);
-		GetHistory.Out_Msg(OUT msg);
+	uint64_t now = ::GetTickCount64();
+	gameSession->_lastPingTime.store(now);
 
-		GetHistory.Execute();
+	Protocol::S_PONG pongPkt;
+	pongPkt.set_timestamp(now);
 
-		while (GetHistory.Fetch())
-		{
-			wcout.imbue(locale("ko_KR.UTF-8"));
-			wcout << L"Load DB data) Name[" << name << L"] Msg[" << msg << L"]" << endl;
-		}
-		GDBConnectionPool->Push(dbConn);
-	}
+	SendBufferRef sendBuffer = ClientPacketHandler::MakeSendBuffer(pongPkt);
+	session->Send(sendBuffer);
+
+
 	return true;
 }

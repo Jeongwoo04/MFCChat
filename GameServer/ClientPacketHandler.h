@@ -7,21 +7,22 @@ extern PacketHandlerFunc GPacketHandler[UINT16_MAX];
 enum : uint16
 {
 	PKT_C_LOGIN = 1000,
-	PKT_S_LOGIN = 1001,
-	PKT_C_ENTER_CHAT = 1002,
-	PKT_S_ENTER_CHAT = 1003,
-	PKT_C_CHAT = 1004,
-	PKT_S_CHAT = 1005,
-	PKT_C_REQUEST_HISTORY_CHAT = 1006,
-	PKT_S_REQUEST_HISTORY_CHAT = 1007,
+	PKT_S_LOGIN_FAIL = 1001,
+	PKT_S_ENTER = 1002,
+	PKT_C_CHAT = 1003,
+	PKT_S_CHAT = 1004,
+	PKT_C_LEAVE = 1005,
+	PKT_S_LEAVE = 1006,
+	PKT_C_PING = 1007,
+	PKT_S_PONG = 1008,
 };
 
 // Custom Handlers
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
 bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt);
-bool Handle_C_ENTER_CHAT(PacketSessionRef& session, Protocol::C_ENTER_CHAT& pkt);
 bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt);
-bool Handle_C_REQUEST_HISTORY_CHAT(PacketSessionRef& session, Protocol::C_REQUEST_HISTORY_CHAT& pkt);
+bool Handle_C_LEAVE(PacketSessionRef& session, Protocol::C_LEAVE& pkt);
+bool Handle_C_PING(PacketSessionRef& session, Protocol::C_PING& pkt);
 
 class ClientPacketHandler
 {
@@ -31,9 +32,9 @@ public:
 		for (int32 i = 0; i < UINT16_MAX; i++)
 			GPacketHandler[i] = Handle_INVALID;
 		GPacketHandler[PKT_C_LOGIN] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_LOGIN>(Handle_C_LOGIN, session, buffer, len); };
-		GPacketHandler[PKT_C_ENTER_CHAT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_ENTER_CHAT>(Handle_C_ENTER_CHAT, session, buffer, len); };
 		GPacketHandler[PKT_C_CHAT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_CHAT>(Handle_C_CHAT, session, buffer, len); };
-		GPacketHandler[PKT_C_REQUEST_HISTORY_CHAT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_REQUEST_HISTORY_CHAT>(Handle_C_REQUEST_HISTORY_CHAT, session, buffer, len); };
+		GPacketHandler[PKT_C_LEAVE] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_LEAVE>(Handle_C_LEAVE, session, buffer, len); };
+		GPacketHandler[PKT_C_PING] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_PING>(Handle_C_PING, session, buffer, len); };
 	}
 
 	static bool HandlePacket(PacketSessionRef& session, BYTE* buffer, int32 len)
@@ -41,10 +42,11 @@ public:
 		PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
 		return GPacketHandler[header->id](session, buffer, len);
 	}
-	static SendBufferRef MakeSendBuffer(Protocol::S_LOGIN& pkt) { return MakeSendBuffer(pkt, PKT_S_LOGIN); }
-	static SendBufferRef MakeSendBuffer(Protocol::S_ENTER_CHAT& pkt) { return MakeSendBuffer(pkt, PKT_S_ENTER_CHAT); }
+	static SendBufferRef MakeSendBuffer(Protocol::S_LOGIN_FAIL& pkt) { return MakeSendBuffer(pkt, PKT_S_LOGIN_FAIL); }
+	static SendBufferRef MakeSendBuffer(Protocol::S_ENTER& pkt) { return MakeSendBuffer(pkt, PKT_S_ENTER); }
 	static SendBufferRef MakeSendBuffer(Protocol::S_CHAT& pkt) { return MakeSendBuffer(pkt, PKT_S_CHAT); }
-	static SendBufferRef MakeSendBuffer(Protocol::S_REQUEST_HISTORY_CHAT& pkt) { return MakeSendBuffer(pkt, PKT_S_REQUEST_HISTORY_CHAT); }
+	static SendBufferRef MakeSendBuffer(Protocol::S_LEAVE& pkt) { return MakeSendBuffer(pkt, PKT_S_LEAVE); }
+	static SendBufferRef MakeSendBuffer(Protocol::S_PONG& pkt) { return MakeSendBuffer(pkt, PKT_S_PONG); }
 
 private:
 	template<typename PacketType, typename ProcessFunc>

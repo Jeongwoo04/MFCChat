@@ -64,15 +64,9 @@ BOOL CChatClientApp::InitInstance()
 	CChatClientDlg dlg;
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
-	if (nResponse == IDOK)
+	if (nResponse == IDOK || nResponse == IDCANCEL)
 	{
 		// TODO: 여기에 [확인]을 클릭하여 대화 상자가 없어질 때 처리할
-		//  코드를 배치합니다.
-		GThreadManager->Join();
-	}
-	else if (nResponse == IDCANCEL)
-	{
-		// TODO: 여기에 [취소]를 클릭하여 대화 상자가 없어질 때 처리할
 		//  코드를 배치합니다.
 		GThreadManager->Join();
 	}

@@ -28,6 +28,7 @@
 #include <google/protobuf/generated_message_reflection.h>
 #include <google/protobuf/repeated_field.h>  // IWYU pragma: export
 #include <google/protobuf/extension_set.h>  // IWYU pragma: export
+#include <google/protobuf/generated_enum_reflection.h>
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
 #define PROTOBUF_INTERNAL_EXPORT_Enum_2eproto
@@ -46,6 +47,33 @@ PROTOBUF_NAMESPACE_OPEN
 PROTOBUF_NAMESPACE_CLOSE
 namespace Protocol {
 
+enum Reason : int {
+  NONE = 0,
+  INVAILD_NAME = 1,
+  INVAILD_USER_ID = 2,
+  SERVER_ERROR = 3,
+  Reason_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  Reason_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool Reason_IsValid(int value);
+constexpr Reason Reason_MIN = NONE;
+constexpr Reason Reason_MAX = SERVER_ERROR;
+constexpr int Reason_ARRAYSIZE = Reason_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* Reason_descriptor();
+template<typename T>
+inline const std::string& Reason_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, Reason>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function Reason_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    Reason_descriptor(), enum_t_value);
+}
+inline bool Reason_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, Reason* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<Reason>(
+    Reason_descriptor(), name, value);
+}
 // ===================================================================
 
 
@@ -65,6 +93,16 @@ namespace Protocol {
 // @@protoc_insertion_point(namespace_scope)
 
 }  // namespace Protocol
+
+PROTOBUF_NAMESPACE_OPEN
+
+template <> struct is_proto_enum< ::Protocol::Reason> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::Reason>() {
+  return ::Protocol::Reason_descriptor();
+}
+
+PROTOBUF_NAMESPACE_CLOSE
 
 // @@protoc_insertion_point(global_scope)
 

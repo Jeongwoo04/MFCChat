@@ -11,9 +11,16 @@
 using ServerSessionRef = shared_ptr<class ServerSession>;
 class CChatClientDlg;
 
+struct OtherPlayerInfo
+{
+	uint64 playerId;
+	std::string name;
+};
+
 class ServerSession : public PacketSession
 {
 public:
+	ServerSession() { };
 	ServerSession(CChatClientDlg* dig) : _dig(dig) { }
 	~ServerSession()
 	{
@@ -30,7 +37,7 @@ public:
 		CString str;
 		_dig->chatName.GetWindowTextW(str);
 		loginPkt.set_name(CW2A(str, CP_UTF8));
-		loginPkt.set_playerindex(0);
+		//loginPkt.set_playerindex(0);
 		
 		// TODO : webserver 외부 인증
 		auto sendBuffer = ServerPacketHandler::MakeSendBuffer(loginPkt);
@@ -56,6 +63,16 @@ public:
 	}
 
 public:
+	void SetName(const string& name) { _name = name; }
+	const string& GetName() const { return _name; }
+
+public:
 	CChatClientDlg* _dig;
+
+public:
+	unordered_map<uint64, OtherPlayerInfo> _otherPlayers;
+
+private:
+	string _name;
 };
 

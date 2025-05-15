@@ -13,7 +13,7 @@ enum
 	BINARY_MAX = 8000
 };
 
-class DBConnection
+class DBConnection : public enable_shared_from_this<DBConnection>
 {
 public:
 	bool			Connect(SQLHENV henv, const WCHAR* connectionString);

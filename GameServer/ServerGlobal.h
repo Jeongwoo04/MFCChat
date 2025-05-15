@@ -3,6 +3,7 @@
 #include "GameSessionManager.h"
 #include "DBConnectionPool.h"
 #include "Room.h"
+#include "Convert.h"
 
 extern GameSessionManager*	GSessionManager;
 extern DBConnectionPool*	GDBConnectionPool;

@@ -8,6 +8,7 @@
 	ThreadManager
 -------------------*/
 
+
 ThreadManager::ThreadManager()
 {
 	// Main Thread
@@ -71,6 +72,17 @@ void ThreadManager::DoGlobalQueueWork()
 void ThreadManager::DoGDBJobQueueWork()
 {
 	DBConnection* dbConn = GDBConnectionPool->Pop();
+
+	const int MAX_RETRY = 2;
+	for (int i = 0; i < MAX_RETRY; ++i)
+	{
+		dbConn = GDBConnectionPool->Pop();
+		if (dbConn)
+			break;
+		Sleep(1);
+	}
+	if (dbConn == nullptr)
+		return;
 
 	while (true)
 	{

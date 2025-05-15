@@ -12,6 +12,7 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
+#include <Convert.h>
 
 // 응용 프로그램 정보에 사용되는 CAboutDlg 대화 상자입니다.
 
@@ -175,6 +176,8 @@ std::string csToUTF8(const CString& str) {
 
 void CChatClientDlg::OnBnClickedSendBtn()
 {
+	ServerSessionRef serverSession = _serverSession;
+
 	CString userName;
 	CString chtMsg;
 
@@ -182,13 +185,44 @@ void CChatClientDlg::OnBnClickedSendBtn()
 	GetDlgItemText(IDC_CHAT_EDIT, chtMsg);
 	SetDlgItemText(IDC_CHAT_EDIT, L"");
 
+	serverSession->SetName(csToUTF8(userName));
+
 	Protocol::C_CHAT chatPkt;
-	chatPkt.set_name(csToUTF8(userName));
-	chatPkt.set_msg(csToUTF8(chtMsg));
+	chatPkt.set_message(csToUTF8(chtMsg));
 	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(chatPkt);
 	_serverSession->Send(sendBuffer);
 }
 
+/*
+void SendPingPeriodically(ServerSessionRef session, std::atomic<bool>& stopFlag)
+{
+	using namespace std::chrono_literals;
+
+	while (!stopFlag.load())
+	{
+		// C_PING 패킷 생성
+		Protocol::C_PING pingPkt;
+		pingPkt.set_timestamp(::GetTickCount64()); // 시간값 넣기
+
+		// 패킷 직렬화 & 버퍼 생성 (예시)
+		auto sendBuffer = ServerPacketHandler::MakeSendBuffer(pingPkt);
+
+		// 서버로 전송
+		session->Send(sendBuffer);
+
+		// 5초마다 한번씩 보낸다고 가정
+		std::this_thread::sleep_for(5s);
+	}
+}
+
+std::atomic<bool> pingThreadStopFlag{ false };
+std::thread pingThread;
+
+void StartPingThread(ServerSessionRef session)
+{
+	pingThread = std::thread(SendPingPeriodically, session, std::ref(pingThreadStopFlag));
+}
+*/
 
 void CChatClientDlg::OnBnClickedConnectBtn()
 {
@@ -228,10 +262,9 @@ void CChatClientDlg::OnBnClickedConnectBtn()
 		NetAddress(ipString, portInt),
 		MakeShared<IocpCore>(),
 		[this]() { return MakeShared<ServerSession>(this); },
-		//MakeShared<ServerSession>,
 		1);
 
-	ASSERT_CRASH(service->Start()); // 잘못된 주소 입력시 프로그램 종료
+	ASSERT_CRASH(service->Start());
 
 	GThreadManager->Launch([=]()
 		{
@@ -247,16 +280,7 @@ void CChatClientDlg::OnOK()
 {
 	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
 	// 모든 대화 목록 불러오기
-	if (_isConnected == false)
-		return;
-
-	Protocol::C_REQUEST_HISTORY_CHAT requestHistoryPkt;
-	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(requestHistoryPkt);
-	_serverSession->Send(sendBuffer);
-
 	return;
-
-	//CDialogEx::OnOK();
 }
 
 
