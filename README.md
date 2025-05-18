@@ -1,18 +1,30 @@
 # Server<br/><br/>
+
 기존 DB 저장 Blocking 과정<br/>
 -> GDBJobQueue 등록 비동기 처리<br/>
 -> Room / DB Worker Thread<br/><br/>
+
 protobuf string UTF-8 한글 깨짐 현상 해결<br/>
 -> _setmode(_fileno(stdout), _O_U16TEXT); SetConsoleOutputCP(CP_UTF8);<br/><br/>
+
 Job / DBJob 분리<br/>
 -> Job / DBJob 실행 Worker 분리<br/>
 -> DoAsync / DoDBAsync 분리<br/>
 -> DB Worker안에서 JobQueue를 비울때 DBConnectionPool Pop / Push 한번만 호출<br/>
 -> 기존 DoAsync 작업 호출시 매번 꺼내서 사용.<br/><br/>
-Client 링커 오류 해결 -> odbc32.lib 추가<br/><br/>
-DBConnection Pop -> nullptr 체크 (spin 2회)<br/>
-패킷 설계 수정. GameSession / Player / Room 등 수정<br/><br/><br/><br/>
 
+Client 링커 오류 해결 -> odbc32.lib 추가<br/><br/>
+
+DBConnection Pop -> nullptr 체크 (spin 2회)<br/>
+
+패킷 설계 수정. GameSession / Player / Room 등 수정<br/>
+
+Client->Conncet->Server->Login->DBConnect->Fail or Success->Enter->Broadcast 완료.<br/>
+TODO : DB message Save 및 xml parser 수정. Out 추가. -> spInsertChatMessage 최적화<br/>
+-> Server에서 PlayerId와 lastMessageId를 hash로 갖고있기. -> Client에서 가지고 요청하면 유실될 가능성 있음<br/>
+-> 1. C_CHAT이 오면? 2. S_CHAT으로 Broadcast할게 생기면? 2.으로 해당 Room에서의 Broadcast 기준. (전체 Game안 message에 대한 처리 X 방향으로)
+
+<br/><br/><br/><br/>
 해결 : DoDBAsync 등록 후 실행x -> 디버깅 결과 JobQueue::Push 및 각 Job들의 Execute 실행까지 확인.<br/>
 -> LCurrentJobQueue 가 기존 JobQueue랑 달리 DBJobQueue에선 첫번째 접근 쓰레드가 처리를 안해줘서 그런가? <br/>
 -> DBSave 안에서 sql Execute 예외처리 로그 추가. -> 잘 실행됨. -> GlobalQueue에서 꺼내올때 문제가 있나? <br/>
