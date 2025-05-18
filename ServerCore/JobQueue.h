@@ -82,5 +82,6 @@ protected:
 	LockQueue<JobRef>		_jobs;
 	LockQueue<DBJobRef>		_dbJobs;
 	Atomic<int32>			_jobCount = 0;
+	Atomic<int32>			_dbJobCount = 0;
 };
 

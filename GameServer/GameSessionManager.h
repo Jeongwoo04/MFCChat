@@ -13,7 +13,7 @@ public:
 	// 전체 메시지
 	void	Broadcast(SendBufferRef sendBuffer);
 
-	void	CheckClientAlive(const Set<GameSessionRef>& sessions);
+	//void	CheckClientAlive(const Set<GameSessionRef>& sessions);
 
 private:
 	USE_LOCK;

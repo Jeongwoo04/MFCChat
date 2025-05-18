@@ -27,20 +27,20 @@ void GameSessionManager::Broadcast(SendBufferRef sendBuffer) // for µ¹¸é¼­ µ¿ÀÏÇ
 	}
 }
 
-void GameSessionManager::CheckClientAlive(const Set<GameSessionRef>& sessions)
-{
-    const uint64_t timeoutMs = 15000; // 15ÃÊ ÀÌ»ó ÀÀ´ä ¾øÀ¸¸é ²÷±è Ã³¸®
-    uint64_t now = GetTickCount64();
-
-    for (auto& session : sessions)
-    {
-        if (!session->IsTimeOut(now))
-        {
-            // ²÷±è °¨Áö: ¼¼¼Ç °­Á¦ Á¾·á Ã³¸®
-            session->Disconnect(L"TimeOut");
-
-            // ·Î±× ³²±â±â
-            std::cout << "Session disconnected due to timeout. PlayerId: " << session->_currentPlayer->playerId << std::endl;
-        }
-    }
-}
+//void GameSessionManager::CheckClientAlive(const Set<GameSessionRef>& sessions)
+//{
+//    const uint64_t timeoutMs = 15000; // 15ÃÊ ÀÌ»ó ÀÀ´ä ¾øÀ¸¸é ²÷±è Ã³¸®
+//    uint64_t now = GetTickCount64();
+//
+//    for (auto& session : sessions)
+//    {
+//        if (!session->IsTimeOut(now))
+//        {
+//            // ²÷±è °¨Áö: ¼¼¼Ç °­Á¦ Á¾·á Ã³¸®
+//            session->Disconnect(L"TimeOut");
+//
+//            // ·Î±× ³²±â±â
+//            std::cout << "Session disconnected due to timeout. PlayerId: " << session->_currentPlayer->playerId << std::endl;
+//        }
+//    }
+//}

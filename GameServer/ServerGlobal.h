@@ -1,12 +1,12 @@
 #pragma once
 
 #include "GameSessionManager.h"
-#include "DBConnectionPool.h"
+//#include "DBConnectionPool.h"
 #include "Room.h"
 #include "Convert.h"
 
 extern GameSessionManager*	GSessionManager;
-extern DBConnectionPool*	GDBConnectionPool;
+//extern DBConnectionPool*	GDBConnectionPool;
 extern shared_ptr<Room>		GRoom;
 
 class ServerGlobal

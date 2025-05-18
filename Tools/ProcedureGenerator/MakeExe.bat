@@ -1,5 +1,5 @@
 pushd %~dp0
-pyinstaller --onefile ProcedureGenerator.py
+pyinstaller --onefile --console ProcedureGenerator.py
 MOVE .\dist\ProcedureGenerator.exe .\GenProcs.exe
 @RD /S /Q .\build
 @RD /S /Q .\dist

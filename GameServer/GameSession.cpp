@@ -10,7 +10,7 @@ void GameSession::OnConnected()
 
 void GameSession::OnDisconnected()
 {
-	_disconnected.store(true);
+	//_disconnected.store(true);
 
 	GSessionManager->Remove(static_pointer_cast<GameSession>(shared_from_this()));
 

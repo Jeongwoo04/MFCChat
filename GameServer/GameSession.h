@@ -22,21 +22,21 @@ public:
 	//ENTER_GAME에서 currentPlayer로 사용 및 현재 room도 사용
 	//이런 포인터를 들고있는게 별로면 id를 가지고 빠르게 dictionary / hash-table에서 가져와도 됨.
 
-	enum
-	{
-		TIMEOUT_SECONDS = 15000,
-	};
-
-public:
-	bool IsTimeOut(uint64_t now)
-	{
-		return (::GetTickCount64() - _lastPingTime.load() >= TIMEOUT_SECONDS);
-	}
-
-public:
-	bool IsDisconnected() const { return _disconnected.load(); }
-	atomic<uint64_t> _lastPingTime = 0;
-
-private:
-	atomic<bool> _disconnected = false;
+//	enum
+//	{
+//		TIMEOUT_SECONDS = 15000,
+//	};
+//
+//public:
+//	bool IsTimeOut(uint64_t now)
+//	{
+//		return (::GetTickCount64() - _lastPingTime.load() >= TIMEOUT_SECONDS);
+//	}
+//
+//public:
+//	bool IsDisconnected() const { return _disconnected.load(); }
+//	atomic<uint64_t> _lastPingTime = 0;
+//
+//private:
+//	atomic<bool> _disconnected = false;
 };

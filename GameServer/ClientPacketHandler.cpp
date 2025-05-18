@@ -29,20 +29,9 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 	if (gameSession->_currentPlayer != nullptr)
 		return false;
 
-	// DB Job ( 내부에서 Room::Enter )
+	const string& name = pkt.name();
 
-	// Temp
-	static Atomic<uint64> idGenerator = 1;
-	PlayerRef playerRef = MakeShared<Player>();
-	playerRef->playerId = idGenerator++;
-	playerRef->name = pkt.name();
-	playerRef->ownerSession = gameSession;
-
-	gameSession->_currentPlayer = playerRef;
-
-	gameSession->_room = GRoom;
-
-	GRoom->DoAsync(&Room::Enter, gameSession);
+	GRoom->DoDBAsync(&Room::DBProcessLogin, gameSession, name);
 
 	return true;
 }
@@ -52,33 +41,21 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
 	PlayerRef player = gameSession->_currentPlayer;
 
-	WCHAR convertName[50] = { 0 };
-	WCHAR convertMsg[100] = { 0 };
+	wstring wNameCopy = Convert::UTF8ToWStringDynamic(player->name);
+	wstring wMessageCopy = Convert::UTF8ToWStringDynamic(pkt.message());
 
-	if (!Convert::UTF8ToWCHARArray(convertName, player->name))
-		return false;
-
-	if (!Convert::UTF8ToWCHARArray(convertMsg, pkt.message()) || wcslen(convertMsg) == 0)
-		return false;
-
-	int32 lenName = static_cast<int32>(wcslen(convertName));
-	int32 lenMsg = static_cast<int32>(wcslen(convertMsg));
-
-	// 복사본 사용 -> 캡처 시 메모리 안전
-	std::wstring wNameCopy = convertName;
-	std::wstring wMsgCopy = convertMsg;
-
-	wcout << L"Send To Room) Name[" << wNameCopy << L"] Msg[" << wMsgCopy << L"]" << endl;
-	//// 기존 DB save 블로킹 방식에서 -> GDBJobQueue 등록 DBWorker 비동기 처리.
-	GRoom->DoDBAsync(&Room::DBSave, wNameCopy, wMsgCopy);
+	GRoom->DoDBAsync(&Room::DBSaveMessage, gameSession, wMessageCopy);
+	wcout << L"Send To Room) ID[" << player->playerId << "] " << "Name[" << wNameCopy << L"] Msg[" << wMessageCopy << L"]" << endl;
 
 	Protocol::S_CHAT chatPkt;
 
+	chatPkt.set_player_id(player->playerId);
 	chatPkt.set_name(player->name);
-	chatPkt.set_message(pkt.message());
+	string sendMsg = u8"[" + player->name + u8"]:" + pkt.message();
+	chatPkt.set_message(sendMsg);
 	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(chatPkt);
 
-	GRoom->DoAsync(&Room::Broadcast, sendBuffer);
+	//GRoom->DoAsync(&Room::Broadcast, sendBuffer);
 
 	return true;
 }
@@ -88,7 +65,7 @@ bool Handle_C_LEAVE(PacketSessionRef& session, Protocol::C_LEAVE& pkt)
 	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
 	PlayerRef player = gameSession->_currentPlayer;
 
-	GRoom->DoAsync(&Room::Leave, player);
+	//GRoom->DoAsync(&Room::Leave, player);
 	return true;
 }
 
@@ -96,15 +73,13 @@ bool Handle_C_PING(PacketSessionRef& session, Protocol::C_PING& pkt)
 {
 	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
 
-	uint64_t now = ::GetTickCount64();
-	gameSession->_lastPingTime.store(now);
+	//gameSession->_lastPingTime.store(now);
 
-	Protocol::S_PONG pongPkt;
-	pongPkt.set_timestamp(now);
+	//Protocol::S_PONG pongPkt;
+	//pongPkt.set_timestamp(now);
 
-	SendBufferRef sendBuffer = ClientPacketHandler::MakeSendBuffer(pongPkt);
-	session->Send(sendBuffer);
-
+	//SendBufferRef sendBuffer = ClientPacketHandler::MakeSendBuffer(pongPkt);
+	//session->Send(sendBuffer);
 
 	return true;
 }

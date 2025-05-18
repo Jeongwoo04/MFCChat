@@ -37,7 +37,7 @@ PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORIT
 PROTOBUF_CONSTEXPR S_LOGIN_FAIL::S_LOGIN_FAIL(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.message_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
-  , /*decltype(_impl_.reason_)*/0
+  , /*decltype(_impl_.cause_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct S_LOGIN_FAILDefaultTypeInternal {
   PROTOBUF_CONSTEXPR S_LOGIN_FAILDefaultTypeInternal()
@@ -52,7 +52,7 @@ PROTOBUF_CONSTEXPR S_ENTER::S_ENTER(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.players_)*/{}
   , /*decltype(_impl_.name_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
-  , /*decltype(_impl_.user_id_)*/uint64_t{0u}
+  , /*decltype(_impl_.player_id_)*/uint64_t{0u}
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct S_ENTERDefaultTypeInternal {
   PROTOBUF_CONSTEXPR S_ENTERDefaultTypeInternal()
@@ -82,6 +82,7 @@ PROTOBUF_CONSTEXPR S_CHAT::S_CHAT(
   , /*decltype(_impl_.message_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
   , /*decltype(_impl_.player_id_)*/uint64_t{0u}
   , /*decltype(_impl_.timestamp_)*/int64_t{0}
+  , /*decltype(_impl_.message_id_)*/0
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct S_CHATDefaultTypeInternal {
   PROTOBUF_CONSTEXPR S_CHATDefaultTypeInternal()
@@ -175,7 +176,7 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
-  PROTOBUF_FIELD_OFFSET(::Protocol::S_LOGIN_FAIL, _impl_.reason_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_LOGIN_FAIL, _impl_.cause_),
   PROTOBUF_FIELD_OFFSET(::Protocol::S_LOGIN_FAIL, _impl_.message_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::Protocol::S_ENTER, _internal_metadata_),
@@ -183,7 +184,7 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
-  PROTOBUF_FIELD_OFFSET(::Protocol::S_ENTER, _impl_.user_id_),
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_ENTER, _impl_.player_id_),
   PROTOBUF_FIELD_OFFSET(::Protocol::S_ENTER, _impl_.name_),
   PROTOBUF_FIELD_OFFSET(::Protocol::S_ENTER, _impl_.players_),
   ~0u,  // no _has_bits_
@@ -199,6 +200,7 @@ const uint32_t TableStruct_Protocol_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
+  PROTOBUF_FIELD_OFFSET(::Protocol::S_CHAT, _impl_.message_id_),
   PROTOBUF_FIELD_OFFSET(::Protocol::S_CHAT, _impl_.player_id_),
   PROTOBUF_FIELD_OFFSET(::Protocol::S_CHAT, _impl_.name_),
   PROTOBUF_FIELD_OFFSET(::Protocol::S_CHAT, _impl_.message_),
@@ -245,11 +247,11 @@ static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protode
   { 15, -1, -1, sizeof(::Protocol::S_ENTER)},
   { 24, -1, -1, sizeof(::Protocol::C_CHAT)},
   { 31, -1, -1, sizeof(::Protocol::S_CHAT)},
-  { 41, -1, -1, sizeof(::Protocol::C_LEAVE)},
-  { 47, -1, -1, sizeof(::Protocol::S_LEAVE)},
-  { 54, -1, -1, sizeof(::Protocol::C_PING)},
-  { 61, -1, -1, sizeof(::Protocol::S_PONG)},
-  { 68, -1, -1, sizeof(::Protocol::PlayerInfo)},
+  { 42, -1, -1, sizeof(::Protocol::C_LEAVE)},
+  { 48, -1, -1, sizeof(::Protocol::S_LEAVE)},
+  { 55, -1, -1, sizeof(::Protocol::C_PING)},
+  { 62, -1, -1, sizeof(::Protocol::S_PONG)},
+  { 69, -1, -1, sizeof(::Protocol::PlayerInfo)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
@@ -266,29 +268,28 @@ static const ::_pb::Message* const file_default_instances[] = {
 };
 
 const char descriptor_table_protodef_Protocol_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\016Protocol.proto\022\010Protocol\032\nEnum.proto\032\014"
-  "Struct.proto\"\027\n\007C_LOGIN\022\014\n\004name\030\001 \001(\t\"A\n"
-  "\014S_LOGIN_FAIL\022 \n\006reason\030\001 \001(\0162\020.Protocol"
-  ".Reason\022\017\n\007message\030\002 \001(\t\"O\n\007S_ENTER\022\017\n\007u"
-  "ser_id\030\001 \001(\004\022\014\n\004name\030\002 \001(\t\022%\n\007players\030\003 "
-  "\003(\0132\024.Protocol.PlayerInfo\"\031\n\006C_CHAT\022\017\n\007m"
-  "essage\030\001 \001(\t\"M\n\006S_CHAT\022\021\n\tplayer_id\030\001 \001("
-  "\004\022\014\n\004name\030\002 \001(\t\022\017\n\007message\030\003 \001(\t\022\021\n\ttime"
-  "stamp\030\004 \001(\003\"\t\n\007C_LEAVE\"\034\n\007S_LEAVE\022\021\n\tpla"
-  "yer_id\030\001 \001(\004\"\033\n\006C_PING\022\021\n\ttimestamp\030\001 \001("
-  "\003\"\033\n\006S_PONG\022\021\n\ttimestamp\030\001 \001(\003\"-\n\nPlayer"
-  "Info\022\021\n\tplayer_id\030\001 \001(\004\022\014\n\004name\030\002 \001(\tb\006p"
-  "roto3"
+  "\n\016Protocol.proto\022\010Protocol\032\nEnum.proto\"\027"
+  "\n\007C_LOGIN\022\014\n\004name\030\001 \001(\t\"\?\n\014S_LOGIN_FAIL\022"
+  "\036\n\005cause\030\001 \001(\0162\017.Protocol.Cause\022\017\n\007messa"
+  "ge\030\002 \001(\t\"Q\n\007S_ENTER\022\021\n\tplayer_id\030\001 \001(\004\022\014"
+  "\n\004name\030\002 \001(\t\022%\n\007players\030\003 \003(\0132\024.Protocol"
+  ".PlayerInfo\"\031\n\006C_CHAT\022\017\n\007message\030\001 \001(\t\"a"
+  "\n\006S_CHAT\022\022\n\nmessage_id\030\001 \001(\005\022\021\n\tplayer_i"
+  "d\030\002 \001(\004\022\014\n\004name\030\003 \001(\t\022\017\n\007message\030\004 \001(\t\022\021"
+  "\n\ttimestamp\030\005 \001(\003\"\t\n\007C_LEAVE\"\034\n\007S_LEAVE\022"
+  "\021\n\tplayer_id\030\001 \001(\004\"\033\n\006C_PING\022\021\n\ttimestam"
+  "p\030\001 \001(\003\"\033\n\006S_PONG\022\021\n\ttimestamp\030\001 \001(\003\"-\n\n"
+  "PlayerInfo\022\021\n\tplayer_id\030\001 \001(\004\022\014\n\004name\030\002 "
+  "\001(\tb\006proto3"
   ;
-static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_deps[2] = {
+static const ::_pbi::DescriptorTable* const descriptor_table_Protocol_2eproto_deps[1] = {
   &::descriptor_table_Enum_2eproto,
-  &::descriptor_table_Struct_2eproto,
 };
 static ::_pbi::once_flag descriptor_table_Protocol_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Protocol_2eproto = {
-    false, false, 485, descriptor_table_protodef_Protocol_2eproto,
+    false, false, 491, descriptor_table_protodef_Protocol_2eproto,
     "Protocol.proto",
-    &descriptor_table_Protocol_2eproto_once, descriptor_table_Protocol_2eproto_deps, 2, 10,
+    &descriptor_table_Protocol_2eproto_once, descriptor_table_Protocol_2eproto_deps, 1, 10,
     schemas, file_default_instances, TableStruct_Protocol_2eproto::offsets,
     file_level_metadata_Protocol_2eproto, file_level_enum_descriptors_Protocol_2eproto,
     file_level_service_descriptors_Protocol_2eproto,
@@ -521,7 +522,7 @@ S_LOGIN_FAIL::S_LOGIN_FAIL(const S_LOGIN_FAIL& from)
   S_LOGIN_FAIL* const _this = this; (void)_this;
   new (&_impl_) Impl_{
       decltype(_impl_.message_){}
-    , decltype(_impl_.reason_){}
+    , decltype(_impl_.cause_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
@@ -533,7 +534,7 @@ S_LOGIN_FAIL::S_LOGIN_FAIL(const S_LOGIN_FAIL& from)
     _this->_impl_.message_.Set(from._internal_message(), 
       _this->GetArenaForAllocation());
   }
-  _this->_impl_.reason_ = from._impl_.reason_;
+  _this->_impl_.cause_ = from._impl_.cause_;
   // @@protoc_insertion_point(copy_constructor:Protocol.S_LOGIN_FAIL)
 }
 
@@ -543,7 +544,7 @@ inline void S_LOGIN_FAIL::SharedCtor(
   (void)is_message_owned;
   new (&_impl_) Impl_{
       decltype(_impl_.message_){}
-    , decltype(_impl_.reason_){0}
+    , decltype(_impl_.cause_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
   _impl_.message_.InitDefault();
@@ -577,7 +578,7 @@ void S_LOGIN_FAIL::Clear() {
   (void) cached_has_bits;
 
   _impl_.message_.ClearToEmpty();
-  _impl_.reason_ = 0;
+  _impl_.cause_ = 0;
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -587,12 +588,12 @@ const char* S_LOGIN_FAIL::_InternalParse(const char* ptr, ::_pbi::ParseContext* 
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // .Protocol.Reason reason = 1;
+      // .Protocol.Cause cause = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
           uint64_t val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
-          _internal_set_reason(static_cast<::Protocol::Reason>(val));
+          _internal_set_cause(static_cast<::Protocol::Cause>(val));
         } else
           goto handle_unusual;
         continue;
@@ -635,11 +636,11 @@ uint8_t* S_LOGIN_FAIL::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .Protocol.Reason reason = 1;
-  if (this->_internal_reason() != 0) {
+  // .Protocol.Cause cause = 1;
+  if (this->_internal_cause() != 0) {
     target = stream->EnsureSpace(target);
     target = ::_pbi::WireFormatLite::WriteEnumToArray(
-      1, this->_internal_reason(), target);
+      1, this->_internal_cause(), target);
   }
 
   // string message = 2;
@@ -675,10 +676,10 @@ size_t S_LOGIN_FAIL::ByteSizeLong() const {
         this->_internal_message());
   }
 
-  // .Protocol.Reason reason = 1;
-  if (this->_internal_reason() != 0) {
+  // .Protocol.Cause cause = 1;
+  if (this->_internal_cause() != 0) {
     total_size += 1 +
-      ::_pbi::WireFormatLite::EnumSize(this->_internal_reason());
+      ::_pbi::WireFormatLite::EnumSize(this->_internal_cause());
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -702,8 +703,8 @@ void S_LOGIN_FAIL::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::P
   if (!from._internal_message().empty()) {
     _this->_internal_set_message(from._internal_message());
   }
-  if (from._internal_reason() != 0) {
-    _this->_internal_set_reason(from._internal_reason());
+  if (from._internal_cause() != 0) {
+    _this->_internal_set_cause(from._internal_cause());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
@@ -728,7 +729,7 @@ void S_LOGIN_FAIL::InternalSwap(S_LOGIN_FAIL* other) {
       &_impl_.message_, lhs_arena,
       &other->_impl_.message_, rhs_arena
   );
-  swap(_impl_.reason_, other->_impl_.reason_);
+  swap(_impl_.cause_, other->_impl_.cause_);
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata S_LOGIN_FAIL::GetMetadata() const {
@@ -755,7 +756,7 @@ S_ENTER::S_ENTER(const S_ENTER& from)
   new (&_impl_) Impl_{
       decltype(_impl_.players_){from._impl_.players_}
     , decltype(_impl_.name_){}
-    , decltype(_impl_.user_id_){}
+    , decltype(_impl_.player_id_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
@@ -767,7 +768,7 @@ S_ENTER::S_ENTER(const S_ENTER& from)
     _this->_impl_.name_.Set(from._internal_name(), 
       _this->GetArenaForAllocation());
   }
-  _this->_impl_.user_id_ = from._impl_.user_id_;
+  _this->_impl_.player_id_ = from._impl_.player_id_;
   // @@protoc_insertion_point(copy_constructor:Protocol.S_ENTER)
 }
 
@@ -778,7 +779,7 @@ inline void S_ENTER::SharedCtor(
   new (&_impl_) Impl_{
       decltype(_impl_.players_){arena}
     , decltype(_impl_.name_){}
-    , decltype(_impl_.user_id_){uint64_t{0u}}
+    , decltype(_impl_.player_id_){uint64_t{0u}}
     , /*decltype(_impl_._cached_size_)*/{}
   };
   _impl_.name_.InitDefault();
@@ -814,7 +815,7 @@ void S_ENTER::Clear() {
 
   _impl_.players_.Clear();
   _impl_.name_.ClearToEmpty();
-  _impl_.user_id_ = uint64_t{0u};
+  _impl_.player_id_ = uint64_t{0u};
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -824,10 +825,10 @@ const char* S_ENTER::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) 
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // uint64 user_id = 1;
+      // uint64 player_id = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
-          _impl_.user_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          _impl_.player_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -884,10 +885,10 @@ uint8_t* S_ENTER::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // uint64 user_id = 1;
-  if (this->_internal_user_id() != 0) {
+  // uint64 player_id = 1;
+  if (this->_internal_player_id() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(1, this->_internal_user_id(), target);
+    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(1, this->_internal_player_id(), target);
   }
 
   // string name = 2;
@@ -938,9 +939,9 @@ size_t S_ENTER::ByteSizeLong() const {
         this->_internal_name());
   }
 
-  // uint64 user_id = 1;
-  if (this->_internal_user_id() != 0) {
-    total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_user_id());
+  // uint64 player_id = 1;
+  if (this->_internal_player_id() != 0) {
+    total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_player_id());
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -965,8 +966,8 @@ void S_ENTER::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOB
   if (!from._internal_name().empty()) {
     _this->_internal_set_name(from._internal_name());
   }
-  if (from._internal_user_id() != 0) {
-    _this->_internal_set_user_id(from._internal_user_id());
+  if (from._internal_player_id() != 0) {
+    _this->_internal_set_player_id(from._internal_player_id());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
@@ -992,7 +993,7 @@ void S_ENTER::InternalSwap(S_ENTER* other) {
       &_impl_.name_, lhs_arena,
       &other->_impl_.name_, rhs_arena
   );
-  swap(_impl_.user_id_, other->_impl_.user_id_);
+  swap(_impl_.player_id_, other->_impl_.player_id_);
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata S_ENTER::GetMetadata() const {
@@ -1224,6 +1225,7 @@ S_CHAT::S_CHAT(const S_CHAT& from)
     , decltype(_impl_.message_){}
     , decltype(_impl_.player_id_){}
     , decltype(_impl_.timestamp_){}
+    , decltype(_impl_.message_id_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
@@ -1244,8 +1246,8 @@ S_CHAT::S_CHAT(const S_CHAT& from)
       _this->GetArenaForAllocation());
   }
   ::memcpy(&_impl_.player_id_, &from._impl_.player_id_,
-    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.timestamp_) -
-    reinterpret_cast<char*>(&_impl_.player_id_)) + sizeof(_impl_.timestamp_));
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.message_id_) -
+    reinterpret_cast<char*>(&_impl_.player_id_)) + sizeof(_impl_.message_id_));
   // @@protoc_insertion_point(copy_constructor:Protocol.S_CHAT)
 }
 
@@ -1258,6 +1260,7 @@ inline void S_CHAT::SharedCtor(
     , decltype(_impl_.message_){}
     , decltype(_impl_.player_id_){uint64_t{0u}}
     , decltype(_impl_.timestamp_){int64_t{0}}
+    , decltype(_impl_.message_id_){0}
     , /*decltype(_impl_._cached_size_)*/{}
   };
   _impl_.name_.InitDefault();
@@ -1298,8 +1301,8 @@ void S_CHAT::Clear() {
   _impl_.name_.ClearToEmpty();
   _impl_.message_.ClearToEmpty();
   ::memset(&_impl_.player_id_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&_impl_.timestamp_) -
-      reinterpret_cast<char*>(&_impl_.player_id_)) + sizeof(_impl_.timestamp_));
+      reinterpret_cast<char*>(&_impl_.message_id_) -
+      reinterpret_cast<char*>(&_impl_.player_id_)) + sizeof(_impl_.message_id_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -1309,17 +1312,25 @@ const char* S_CHAT::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // uint64 player_id = 1;
+      // int32 message_id = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.message_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // uint64 player_id = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
           _impl_.player_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else
           goto handle_unusual;
         continue;
-      // string name = 2;
-      case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+      // string name = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
           auto str = _internal_mutable_name();
           ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(ptr);
@@ -1327,9 +1338,9 @@ const char* S_CHAT::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
         } else
           goto handle_unusual;
         continue;
-      // string message = 3;
-      case 3:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
+      // string message = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 34)) {
           auto str = _internal_mutable_message();
           ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(ptr);
@@ -1337,9 +1348,9 @@ const char* S_CHAT::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
         } else
           goto handle_unusual;
         continue;
-      // int64 timestamp = 4;
-      case 4:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 32)) {
+      // int64 timestamp = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 40)) {
           _impl_.timestamp_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
           CHK_(ptr);
         } else
@@ -1374,36 +1385,42 @@ uint8_t* S_CHAT::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // uint64 player_id = 1;
-  if (this->_internal_player_id() != 0) {
+  // int32 message_id = 1;
+  if (this->_internal_message_id() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(1, this->_internal_player_id(), target);
+    target = ::_pbi::WireFormatLite::WriteInt32ToArray(1, this->_internal_message_id(), target);
   }
 
-  // string name = 2;
+  // uint64 player_id = 2;
+  if (this->_internal_player_id() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(2, this->_internal_player_id(), target);
+  }
+
+  // string name = 3;
   if (!this->_internal_name().empty()) {
     ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
       this->_internal_name().data(), static_cast<int>(this->_internal_name().length()),
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
       "Protocol.S_CHAT.name");
     target = stream->WriteStringMaybeAliased(
-        2, this->_internal_name(), target);
+        3, this->_internal_name(), target);
   }
 
-  // string message = 3;
+  // string message = 4;
   if (!this->_internal_message().empty()) {
     ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
       this->_internal_message().data(), static_cast<int>(this->_internal_message().length()),
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
       "Protocol.S_CHAT.message");
     target = stream->WriteStringMaybeAliased(
-        3, this->_internal_message(), target);
+        4, this->_internal_message(), target);
   }
 
-  // int64 timestamp = 4;
+  // int64 timestamp = 5;
   if (this->_internal_timestamp() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteInt64ToArray(4, this->_internal_timestamp(), target);
+    target = ::_pbi::WireFormatLite::WriteInt64ToArray(5, this->_internal_timestamp(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -1422,28 +1439,33 @@ size_t S_CHAT::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // string name = 2;
+  // string name = 3;
   if (!this->_internal_name().empty()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
         this->_internal_name());
   }
 
-  // string message = 3;
+  // string message = 4;
   if (!this->_internal_message().empty()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
         this->_internal_message());
   }
 
-  // uint64 player_id = 1;
+  // uint64 player_id = 2;
   if (this->_internal_player_id() != 0) {
     total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_player_id());
   }
 
-  // int64 timestamp = 4;
+  // int64 timestamp = 5;
   if (this->_internal_timestamp() != 0) {
     total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_timestamp());
+  }
+
+  // int32 message_id = 1;
+  if (this->_internal_message_id() != 0) {
+    total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(this->_internal_message_id());
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -1476,6 +1498,9 @@ void S_CHAT::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBU
   if (from._internal_timestamp() != 0) {
     _this->_internal_set_timestamp(from._internal_timestamp());
   }
+  if (from._internal_message_id() != 0) {
+    _this->_internal_set_message_id(from._internal_message_id());
+  }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
@@ -1504,8 +1529,8 @@ void S_CHAT::InternalSwap(S_CHAT* other) {
       &other->_impl_.message_, rhs_arena
   );
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(S_CHAT, _impl_.timestamp_)
-      + sizeof(S_CHAT::_impl_.timestamp_)
+      PROTOBUF_FIELD_OFFSET(S_CHAT, _impl_.message_id_)
+      + sizeof(S_CHAT::_impl_.message_id_)
       - PROTOBUF_FIELD_OFFSET(S_CHAT, _impl_.player_id_)>(
           reinterpret_cast<char*>(&_impl_.player_id_),
           reinterpret_cast<char*>(&other->_impl_.player_id_));

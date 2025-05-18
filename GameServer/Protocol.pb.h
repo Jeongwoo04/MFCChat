@@ -32,7 +32,6 @@
 #include <google/protobuf/extension_set.h>  // IWYU pragma: export
 #include <google/protobuf/unknown_field_set.h>
 #include "Enum.pb.h"
-#include "Struct.pb.h"
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
 #define PROTOBUF_INTERNAL_EXPORT_Protocol_2eproto
@@ -370,7 +369,7 @@ class S_LOGIN_FAIL final :
 
   enum : int {
     kMessageFieldNumber = 2,
-    kReasonFieldNumber = 1,
+    kCauseFieldNumber = 1,
   };
   // string message = 2;
   void clear_message();
@@ -386,13 +385,13 @@ class S_LOGIN_FAIL final :
   std::string* _internal_mutable_message();
   public:
 
-  // .Protocol.Reason reason = 1;
-  void clear_reason();
-  ::Protocol::Reason reason() const;
-  void set_reason(::Protocol::Reason value);
+  // .Protocol.Cause cause = 1;
+  void clear_cause();
+  ::Protocol::Cause cause() const;
+  void set_cause(::Protocol::Cause value);
   private:
-  ::Protocol::Reason _internal_reason() const;
-  void _internal_set_reason(::Protocol::Reason value);
+  ::Protocol::Cause _internal_cause() const;
+  void _internal_set_cause(::Protocol::Cause value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.S_LOGIN_FAIL)
@@ -404,7 +403,7 @@ class S_LOGIN_FAIL final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr message_;
-    int reason_;
+    int cause_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -535,7 +534,7 @@ class S_ENTER final :
   enum : int {
     kPlayersFieldNumber = 3,
     kNameFieldNumber = 2,
-    kUserIdFieldNumber = 1,
+    kPlayerIdFieldNumber = 1,
   };
   // repeated .Protocol.PlayerInfo players = 3;
   int players_size() const;
@@ -569,13 +568,13 @@ class S_ENTER final :
   std::string* _internal_mutable_name();
   public:
 
-  // uint64 user_id = 1;
-  void clear_user_id();
-  uint64_t user_id() const;
-  void set_user_id(uint64_t value);
+  // uint64 player_id = 1;
+  void clear_player_id();
+  uint64_t player_id() const;
+  void set_player_id(uint64_t value);
   private:
-  uint64_t _internal_user_id() const;
-  void _internal_set_user_id(uint64_t value);
+  uint64_t _internal_player_id() const;
+  void _internal_set_player_id(uint64_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.S_ENTER)
@@ -588,7 +587,7 @@ class S_ENTER final :
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField< ::Protocol::PlayerInfo > players_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr name_;
-    uint64_t user_id_;
+    uint64_t player_id_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -870,12 +869,13 @@ class S_CHAT final :
   // accessors -------------------------------------------------------
 
   enum : int {
-    kNameFieldNumber = 2,
-    kMessageFieldNumber = 3,
-    kPlayerIdFieldNumber = 1,
-    kTimestampFieldNumber = 4,
+    kNameFieldNumber = 3,
+    kMessageFieldNumber = 4,
+    kPlayerIdFieldNumber = 2,
+    kTimestampFieldNumber = 5,
+    kMessageIdFieldNumber = 1,
   };
-  // string name = 2;
+  // string name = 3;
   void clear_name();
   const std::string& name() const;
   template <typename ArgT0 = const std::string&, typename... ArgT>
@@ -889,7 +889,7 @@ class S_CHAT final :
   std::string* _internal_mutable_name();
   public:
 
-  // string message = 3;
+  // string message = 4;
   void clear_message();
   const std::string& message() const;
   template <typename ArgT0 = const std::string&, typename... ArgT>
@@ -903,7 +903,7 @@ class S_CHAT final :
   std::string* _internal_mutable_message();
   public:
 
-  // uint64 player_id = 1;
+  // uint64 player_id = 2;
   void clear_player_id();
   uint64_t player_id() const;
   void set_player_id(uint64_t value);
@@ -912,13 +912,22 @@ class S_CHAT final :
   void _internal_set_player_id(uint64_t value);
   public:
 
-  // int64 timestamp = 4;
+  // int64 timestamp = 5;
   void clear_timestamp();
   int64_t timestamp() const;
   void set_timestamp(int64_t value);
   private:
   int64_t _internal_timestamp() const;
   void _internal_set_timestamp(int64_t value);
+  public:
+
+  // int32 message_id = 1;
+  void clear_message_id();
+  int32_t message_id() const;
+  void set_message_id(int32_t value);
+  private:
+  int32_t _internal_message_id() const;
+  void _internal_set_message_id(int32_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.S_CHAT)
@@ -933,6 +942,7 @@ class S_CHAT final :
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr message_;
     uint64_t player_id_;
     int64_t timestamp_;
+    int32_t message_id_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -1729,24 +1739,24 @@ inline void C_LOGIN::set_allocated_name(std::string* name) {
 
 // S_LOGIN_FAIL
 
-// .Protocol.Reason reason = 1;
-inline void S_LOGIN_FAIL::clear_reason() {
-  _impl_.reason_ = 0;
+// .Protocol.Cause cause = 1;
+inline void S_LOGIN_FAIL::clear_cause() {
+  _impl_.cause_ = 0;
 }
-inline ::Protocol::Reason S_LOGIN_FAIL::_internal_reason() const {
-  return static_cast< ::Protocol::Reason >(_impl_.reason_);
+inline ::Protocol::Cause S_LOGIN_FAIL::_internal_cause() const {
+  return static_cast< ::Protocol::Cause >(_impl_.cause_);
 }
-inline ::Protocol::Reason S_LOGIN_FAIL::reason() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_LOGIN_FAIL.reason)
-  return _internal_reason();
+inline ::Protocol::Cause S_LOGIN_FAIL::cause() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_LOGIN_FAIL.cause)
+  return _internal_cause();
 }
-inline void S_LOGIN_FAIL::_internal_set_reason(::Protocol::Reason value) {
+inline void S_LOGIN_FAIL::_internal_set_cause(::Protocol::Cause value) {
   
-  _impl_.reason_ = value;
+  _impl_.cause_ = value;
 }
-inline void S_LOGIN_FAIL::set_reason(::Protocol::Reason value) {
-  _internal_set_reason(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_LOGIN_FAIL.reason)
+inline void S_LOGIN_FAIL::set_cause(::Protocol::Cause value) {
+  _internal_set_cause(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_LOGIN_FAIL.cause)
 }
 
 // string message = 2;
@@ -1803,24 +1813,24 @@ inline void S_LOGIN_FAIL::set_allocated_message(std::string* message) {
 
 // S_ENTER
 
-// uint64 user_id = 1;
-inline void S_ENTER::clear_user_id() {
-  _impl_.user_id_ = uint64_t{0u};
+// uint64 player_id = 1;
+inline void S_ENTER::clear_player_id() {
+  _impl_.player_id_ = uint64_t{0u};
 }
-inline uint64_t S_ENTER::_internal_user_id() const {
-  return _impl_.user_id_;
+inline uint64_t S_ENTER::_internal_player_id() const {
+  return _impl_.player_id_;
 }
-inline uint64_t S_ENTER::user_id() const {
-  // @@protoc_insertion_point(field_get:Protocol.S_ENTER.user_id)
-  return _internal_user_id();
+inline uint64_t S_ENTER::player_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_ENTER.player_id)
+  return _internal_player_id();
 }
-inline void S_ENTER::_internal_set_user_id(uint64_t value) {
+inline void S_ENTER::_internal_set_player_id(uint64_t value) {
   
-  _impl_.user_id_ = value;
+  _impl_.player_id_ = value;
 }
-inline void S_ENTER::set_user_id(uint64_t value) {
-  _internal_set_user_id(value);
-  // @@protoc_insertion_point(field_set:Protocol.S_ENTER.user_id)
+inline void S_ENTER::set_player_id(uint64_t value) {
+  _internal_set_player_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_ENTER.player_id)
 }
 
 // string name = 2;
@@ -1971,7 +1981,27 @@ inline void C_CHAT::set_allocated_message(std::string* message) {
 
 // S_CHAT
 
-// uint64 player_id = 1;
+// int32 message_id = 1;
+inline void S_CHAT::clear_message_id() {
+  _impl_.message_id_ = 0;
+}
+inline int32_t S_CHAT::_internal_message_id() const {
+  return _impl_.message_id_;
+}
+inline int32_t S_CHAT::message_id() const {
+  // @@protoc_insertion_point(field_get:Protocol.S_CHAT.message_id)
+  return _internal_message_id();
+}
+inline void S_CHAT::_internal_set_message_id(int32_t value) {
+  
+  _impl_.message_id_ = value;
+}
+inline void S_CHAT::set_message_id(int32_t value) {
+  _internal_set_message_id(value);
+  // @@protoc_insertion_point(field_set:Protocol.S_CHAT.message_id)
+}
+
+// uint64 player_id = 2;
 inline void S_CHAT::clear_player_id() {
   _impl_.player_id_ = uint64_t{0u};
 }
@@ -1991,7 +2021,7 @@ inline void S_CHAT::set_player_id(uint64_t value) {
   // @@protoc_insertion_point(field_set:Protocol.S_CHAT.player_id)
 }
 
-// string name = 2;
+// string name = 3;
 inline void S_CHAT::clear_name() {
   _impl_.name_.ClearToEmpty();
 }
@@ -2041,7 +2071,7 @@ inline void S_CHAT::set_allocated_name(std::string* name) {
   // @@protoc_insertion_point(field_set_allocated:Protocol.S_CHAT.name)
 }
 
-// string message = 3;
+// string message = 4;
 inline void S_CHAT::clear_message() {
   _impl_.message_.ClearToEmpty();
 }
@@ -2091,7 +2121,7 @@ inline void S_CHAT::set_allocated_message(std::string* message) {
   // @@protoc_insertion_point(field_set_allocated:Protocol.S_CHAT.message)
 }
 
-// int64 timestamp = 4;
+// int64 timestamp = 5;
 inline void S_CHAT::clear_timestamp() {
   _impl_.timestamp_ = int64_t{0};
 }

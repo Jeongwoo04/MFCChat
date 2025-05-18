@@ -1,31 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
 <GameDB>
-	<Table name="Msg" desc="메시지 테이블">
-		<Column name="id" type="int" notnull="true" identity="1,1"/>
-		<Column name="msg" type="nvarchar(200)" notnull="false"/>
-		<Column name="name" type="nvarchar(100)" notnull="false"/>
+	<Table name="Player" desc="플레이어 정보">
+		<Column name="player_id" type="int" notnull="true" identity="1,1"/>
+		<Column name="name" type="nvarchar(100)" notnull="true" />
 		<Index type="clustered">
 			<PrimaryKey/>
-			<Column name="id"/>
+			<Column name="player_id"/>
+		</Index>
+		<Index type="nonclustered" unique="true">
+			<Column name="name"/>
 		</Index>
 	</Table>
-	<Procedure name="spInsertMsg">
-		<Param name="@msg" type="nvarchar(200)"/>
-		<Param name="@name" type="nvarchar(100)"/>
+	<Table name="Login" desc="로그인 기록">
+		<Column name="login_id" type="int" notnull="true" identity="1,1"/>
+		<Column name="player_id" type="int" notnull="true" />
+		<Column name="login_time" type="datetime" notnull="true" />
+		<Index type="clustered">
+			<PrimaryKey/>
+			<Column name="login_id"/>
+		</Index>
+		<Index type="nonclustered">
+			<Column name="player_id"/>
+		</Index>
+	</Table>
+	<Table name="ChatMessage" desc="채팅 메시지 기록">
+		<Column name="message_id" type="int" notnull="true" identity="1,1"/>
+		<Column name="player_id" type="int" notnull="true" />
+		<Column name="message" type="nvarchar(200)" notnull="true" />
+		<Column name="timestamp" type="datetime" notnull="true" />
+		<Index type="clustered">
+			<PrimaryKey/>
+			<Column name="message_id"/>
+		</Index>
+		<Index type="nonclustered">
+			<Column name="player_id"/>
+		</Index>
+	</Table>
+
+	<Procedure name="spInsertPlayer">
+		<Param name="@name" type="nvarchar(100)" />
 		<Body>
-			<![CDATA[ INSERT INTO [dbo].[Msg]([msg], [name]) VALUES(@msg, @name); ]]>
+			<![CDATA[
+        INSERT INTO [dbo].[Player] ([name]) VALUES (@name);
+        ]]>
 		</Body>
 	</Procedure>
-	<Procedure name="spGetMsg">
-		<Param name="@id" type="int"/>
+	<Procedure name="spGetPlayerIdByName">
+		<Param name="@name" type="nvarchar(100)" />
+		<Column name="player_id" type="int" />
 		<Body>
-			<![CDATA[ SELECT id, msg, name FROM [dbo].[Msg] WHERE id BETWEEN 1 AND (@id) ]]>
+			<![CDATA[
+        SELECT player_id FROM [dbo].[Player] WHERE [name] = @name;
+        ]]>
 		</Body>
 	</Procedure>
-	<Procedure name="spGetAllMsg">
-		<Param name="@id" type="int"/>
+	<Procedure name="spInsertLogin">
+		<Param name="@player_id" type="int" />
+		<Param name="@login_time" type="datetime" />
 		<Body>
-			<![CDATA[ SELECT id, msg, name FROM [dbo].[Msg] WHERE id >= 1 ]]>
+			<![CDATA[
+        INSERT INTO [dbo].[Login] ([player_id], [login_time]) VALUES (@player_id, @login_time);
+      ]]>
+		</Body>
+	</Procedure>
+	<Procedure name="spInsertChatMessage">
+		<Param name="@player_id" type="int" />
+		<Param name="@message" type="nvarchar(200)" />
+		<Param name="@timestamp" type="datetime" />
+		<Param name="@message_id" type="int" out="true" />
+		<Body>
+			<![CDATA[
+			INSERT INTO [dbo].[ChatMessage] ([player_id], [message], [timestamp])
+			VALUES (@player_id, @message, @timestamp);
+			
+			SET @message_id = SCOPE_IDENTITY();
+		]]>
+		</Body>
+	</Procedure>
+	<Procedure name="spGetRecentChatMessages">
+		<Param name="@lastMessageId" type="int" />
+		<Body>
+			<![CDATA[
+        SELECT message_id, player_id, message, timestamp 
+        FROM [dbo].[ChatMessage] 
+        WHERE message_id > @lastMessageId 
+        ORDER BY message_id ASC;
+      ]]>
 		</Body>
 	</Procedure>
 </GameDB>

@@ -13,21 +13,20 @@ bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
 
 bool Handle_S_LOGIN_FAIL(PacketSessionRef& session, Protocol::S_LOGIN_FAIL& pkt)
 {
-	switch (pkt.reason()) {
-	case Protocol::Reason::NONE:
+	switch (pkt.cause()) {
+	case Protocol::Cause::NONE:
 
 		break;
-	case Protocol::Reason::INVAILD_NAME:
+	case Protocol::Cause::INVAILD_NAME:
 
 		break;
-	case Protocol::Reason::INVAILD_USER_ID:
+	case Protocol::Cause::DB_ERROR:
 
 		break;
-	case Protocol::Reason::SERVER_ERROR:
+	case Protocol::Cause::DUPLICATE_NAME:
 
 		break;
 	default:
-
 		break;
 	}
 
@@ -41,21 +40,19 @@ bool Handle_S_ENTER(PacketSessionRef& session, Protocol::S_ENTER& pkt)
 	ServerSessionRef serverSession = static_pointer_cast<ServerSession>(session);
 	serverSession->SetName(pkt.name());
 
-	serverSession->_otherPlayers.clear(); // 기존 목록 제거 (중복 방지)
+	// 기존 목록 제거 (중복 방지)
+	serverSession->_otherPlayers.clear();
 
-	for (const auto& protoInfo : pkt.players())
+	if (serverSession->GetName() != pkt.name())
 	{
-		OtherPlayerInfo info;
-		info.playerId = protoInfo.player_id();
-		info.name = protoInfo.name();
-		serverSession->_otherPlayers[info.playerId] = info;
+		for (const auto& protoInfo : pkt.players())
+		{
+			OtherPlayerInfo info;
+			info.playerId = protoInfo.player_id();
+			info.name = protoInfo.name();
+			serverSession->_otherPlayers[info.playerId] = info;
+		}
 	}
-
-	//WCHAR convertMsg[100] = { 0, };
-	//int nLen = MultiByteToWideChar(CP_UTF8, 0, pkt.msg().c_str(), pkt.msg().size() + 1, NULL, NULL);
-	//MultiByteToWideChar(CP_UTF8, 0, pkt.msg().c_str(), pkt.msg().size() + 1, convertMsg, nLen);
-
-	//serverSession->_dig->AddEventString(convertMsg);
 
 	return true;
 }
@@ -73,41 +70,12 @@ bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
 		newInfo.name = pkt.name();
 		info[pkt.player_id()] = newInfo;
 
-		string message = "[" + pkt.name() + "] 님이 채팅방에 입장했습니다.";
-		wstring wMessage = Convert::UTF8ToWString(message);
-
-		serverSession->_dig->AddEventString(wMessage.c_str());
-	}
-	else
-	{
-		std::string message = "[" + pkt.name() + "] " + pkt.message();
-
-		// UTF-8 → UTF-16 변환
-		int len = MultiByteToWideChar(CP_UTF8, 0, message.c_str(), -1, nullptr, 0);
-		std::wstring wmessage(len, 0);
-		MultiByteToWideChar(CP_UTF8, 0, message.c_str(), -1, &wmessage[0], len);
-
-		// wmessage는 널 포함, 널 종료문자도 길이에 포함
-		// 필요시 널 제거 (wstring 내부에 널이 있으면 길이가 꼬일 수 있음)
-		if (!wmessage.empty() && wmessage.back() == L'\0')
-			wmessage.pop_back();
-
-		serverSession->_dig->AddEventString(wmessage.c_str());
-
-		//WCHAR convertName[50] = { 0, };
-		//int nLen = MultiByteToWideChar(CP_UTF8, 0, pkt.name().c_str(), pkt.name().size() + 1, NULL, NULL);
-		//MultiByteToWideChar(CP_UTF8, 0, pkt.name().c_str(), pkt.name().size() + 1, convertName, nLen);
-
-		//WCHAR convertMsg[100] = { 0, };
-		//nLen = MultiByteToWideChar(CP_UTF8, 0, pkt.message().c_str(), pkt.message().size() + 1, NULL, NULL);
-		//MultiByteToWideChar(CP_UTF8, 0, pkt.message().c_str(), pkt.message().size() + 1, convertMsg, nLen);
-
-		//wstring ws_msg = L"[" + static_cast<wstring>(convertName) + L"] : " + convertMsg;
-		//ws_msg += L'\0';
-		//wstring convertStr = wstring(ws_msg.begin(), ws_msg.end());
-		//serverSession->_dig->AddEventString(convertStr.c_str());
 	}
 
+	string message = pkt.message();
+	wstring wMessage = Convert::UTF8ToWStringDynamic(message);
+
+	serverSession->_dig->AddEventString(wMessage.c_str());
 
 	return true;
 }
@@ -121,9 +89,10 @@ bool Handle_S_LEAVE(PacketSessionRef& session, Protocol::S_LEAVE& pkt)
 	if (it != info.end())
 	{
 		string message = u8"[" + it->second.name + u8"님이 채팅방을 나갔습니다.";
-		wstring wMessage(message.begin(), message.end());
+		wstring wMessage = Convert::UTF8ToWStringDynamic(message);
 
 		serverSession->_dig->AddEventString(wMessage.c_str());
+		info.erase(it);
 	}
 	return true;
 }

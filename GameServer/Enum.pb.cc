@@ -29,13 +29,13 @@ static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
 static constexpr ::_pb::Message* const* file_default_instances = nullptr;
 
 const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\nEnum.proto\022\010Protocol*K\n\006Reason\022\010\n\004NONE"
-  "\020\000\022\020\n\014INVAILD_NAME\020\001\022\023\n\017INVAILD_USER_ID\020"
-  "\002\022\020\n\014SERVER_ERROR\020\003b\006proto3"
+  "\n\nEnum.proto\022\010Protocol*E\n\005Cause\022\010\n\004NONE\020"
+  "\000\022\020\n\014INVAILD_NAME\020\001\022\014\n\010DB_ERROR\020\002\022\022\n\016DUP"
+  "LICATE_NAME\020\003b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 107, descriptor_table_protodef_Enum_2eproto,
+    false, false, 101, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -49,11 +49,11 @@ PROTOBUF_ATTRIBUTE_WEAK const ::_pbi::DescriptorTable* descriptor_table_Enum_2ep
 // Force running AddDescriptors() at dynamic initialization time.
 PROTOBUF_ATTRIBUTE_INIT_PRIORITY2 static ::_pbi::AddDescriptorsRunner dynamic_init_dummy_Enum_2eproto(&descriptor_table_Enum_2eproto);
 namespace Protocol {
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* Reason_descriptor() {
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* Cause_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
   return file_level_enum_descriptors_Enum_2eproto[0];
 }
-bool Reason_IsValid(int value) {
+bool Cause_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:

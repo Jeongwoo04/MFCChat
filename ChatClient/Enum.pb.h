@@ -47,32 +47,32 @@ PROTOBUF_NAMESPACE_OPEN
 PROTOBUF_NAMESPACE_CLOSE
 namespace Protocol {
 
-enum Reason : int {
+enum Cause : int {
   NONE = 0,
   INVAILD_NAME = 1,
-  INVAILD_USER_ID = 2,
-  SERVER_ERROR = 3,
-  Reason_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
-  Reason_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+  DB_ERROR = 2,
+  DUPLICATE_NAME = 3,
+  Cause_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  Cause_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
-bool Reason_IsValid(int value);
-constexpr Reason Reason_MIN = NONE;
-constexpr Reason Reason_MAX = SERVER_ERROR;
-constexpr int Reason_ARRAYSIZE = Reason_MAX + 1;
+bool Cause_IsValid(int value);
+constexpr Cause Cause_MIN = NONE;
+constexpr Cause Cause_MAX = DUPLICATE_NAME;
+constexpr int Cause_ARRAYSIZE = Cause_MAX + 1;
 
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* Reason_descriptor();
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* Cause_descriptor();
 template<typename T>
-inline const std::string& Reason_Name(T enum_t_value) {
-  static_assert(::std::is_same<T, Reason>::value ||
+inline const std::string& Cause_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, Cause>::value ||
     ::std::is_integral<T>::value,
-    "Incorrect type passed to function Reason_Name.");
+    "Incorrect type passed to function Cause_Name.");
   return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
-    Reason_descriptor(), enum_t_value);
+    Cause_descriptor(), enum_t_value);
 }
-inline bool Reason_Parse(
-    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, Reason* value) {
-  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<Reason>(
-    Reason_descriptor(), name, value);
+inline bool Cause_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, Cause* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<Cause>(
+    Cause_descriptor(), name, value);
 }
 // ===================================================================
 
@@ -96,10 +96,10 @@ inline bool Reason_Parse(
 
 PROTOBUF_NAMESPACE_OPEN
 
-template <> struct is_proto_enum< ::Protocol::Reason> : ::std::true_type {};
+template <> struct is_proto_enum< ::Protocol::Cause> : ::std::true_type {};
 template <>
-inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::Reason>() {
-  return ::Protocol::Reason_descriptor();
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::Cause>() {
+  return ::Protocol::Cause_descriptor();
 }
 
 PROTOBUF_NAMESPACE_CLOSE

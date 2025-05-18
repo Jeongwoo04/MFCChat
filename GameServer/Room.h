@@ -6,23 +6,21 @@ using PlayerRef = shared_ptr<class Player>;
 class Room : public JobQueue
 {
 public:
-	Room() { }
-	Room(uint32 roomId) : _roomId(roomId) { }
-
 	void Enter(GameSessionRef gameSession);
 	void Leave(PlayerRef player);
-	void Broadcast(SendBufferRef sendBuffer);
-	void BroadcastOthers(PlayerRef owner, SendBufferRef sendBuffer);
+	void Broadcast(GameSessionRef gameSession, SendBufferRef sendBuffer);
+	void BroadcastOthers(GameSessionRef gameSession, SendBufferRef sendBuffer);
 
-	void DBSave(DBConnection* dbConn, std::wstring name, std::wstring msg);
+	void SendLoginFail(GameSessionRef gameSession, Protocol::Cause cause, string msg);
+
+	void DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, string name);
+	void DBSaveMessage(DBConnection* dbConn, GameSessionRef gameSession, wstring msg);
 
 	PlayerRef FindPlayer(uint64 playerId);
-
-	uint32 GetRoomId() const { return _roomId; }
 
 public:
 	USE_LOCK;
 	unordered_map<uint64, PlayerRef>	_players;
-	uint32 _roomId;
+	unordered_map<uint64, int32>	_lastSentMessageIdPerUser;
 	//Vector<GameSessionRef>	_sessions;
 };

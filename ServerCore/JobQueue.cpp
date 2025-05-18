@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "JobQueue.h"
 #include "GlobalQueue.h"
+#include "DBConnectionPool.h"
 
 /*--------------
 	JobQueue
@@ -61,28 +62,31 @@ void JobQueue::Execute()
 
 void JobQueue::Push(DBJobRef dbJob, bool pushOnly)
 {
-	const int32 prevCount = _jobCount.fetch_add(1);
+	const int32 prevCount = _dbJobCount.fetch_add(1);
 	_dbJobs.Push(dbJob); // WRITE_LOCK
 
 	// 첫번째 Job을 넣은 쓰레드가 실행까지 담당
-	//if (prevCount == 0)
-	//{
+	if (prevCount == 0 && LCurrentDBJobQueue == nullptr)
+	{
 		// 이미 실행중인 JobQueue가 없으면 실행
 		//if (LCurrentJobQueue == nullptr && pushOnly == false)
 		//{
-		//	Execute();
+		//	GDBJobQueue->Push(shared_from_this());
 		//}
 		//else
 		//{
 			// 여유 있는 다른 쓰레드가 실행하도록 GlobalQueue에 넘긴다
-			GDBJobQueue->Push(shared_from_this());
-	//	}
-	//}
+		GDBJobQueue->Push(shared_from_this());
+		//}
+	}
 }
 
 void JobQueue::Execute(DBConnection* dbConn)
 {
-	LCurrentJobQueue = this;
+	if (LCurrentDBJobQueue != nullptr)
+		return;
+
+	LCurrentDBJobQueue = this;
 
 	while (true)
 	{
@@ -93,15 +97,17 @@ void JobQueue::Execute(DBConnection* dbConn)
 		for (int32 i = 0; i < jobCount; i++)
 			jobs[i]->Execute(dbConn); // DBConnection 전달
 
-		if (_jobCount.fetch_sub(static_cast<int32>(jobs.size())) == jobs.size())
+		if (_dbJobCount.fetch_sub(jobCount) == jobCount)
 		{
-			LCurrentJobQueue = nullptr;
+			LCurrentDBJobQueue = nullptr;
 			return;
 		}
 
-		if (::GetTickCount64() >= LEndTickCount)
+		const uint64 now = ::GetTickCount64();
+		if (now >= LEndTickCount)
 		{
-			LCurrentJobQueue = nullptr;
+			LCurrentDBJobQueue = nullptr;
+			// 여유 있는 다른 쓰레드가 실행하도록 GlobalQueue에 넘긴다
 			GDBJobQueue->Push(shared_from_this());
 			break;
 		}

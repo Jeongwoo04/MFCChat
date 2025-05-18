@@ -36,8 +36,16 @@ public:
 
 		CString str;
 		_dig->chatName.GetWindowTextW(str);
+		
+		//{
+		//	wstring wstr(str);
+
+		//	int size = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
+		//	string utf8Str(size - 1, 0);
+		//	WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &utf8Str[0], size, nullptr, nullptr);
+		//	loginPkt.set_name(utf8Str);
+		//}
 		loginPkt.set_name(CW2A(str, CP_UTF8));
-		//loginPkt.set_playerindex(0);
 		
 		// TODO : webserver 외부 인증
 		auto sendBuffer = ServerPacketHandler::MakeSendBuffer(loginPkt);

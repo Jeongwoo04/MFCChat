@@ -73,17 +73,6 @@ void ThreadManager::DoGDBJobQueueWork()
 {
 	DBConnection* dbConn = GDBConnectionPool->Pop();
 
-	const int MAX_RETRY = 2;
-	for (int i = 0; i < MAX_RETRY; ++i)
-	{
-		dbConn = GDBConnectionPool->Pop();
-		if (dbConn)
-			break;
-		Sleep(1);
-	}
-	if (dbConn == nullptr)
-		return;
-
 	while (true)
 	{
 		uint64 now = ::GetTickCount64();
@@ -93,7 +82,6 @@ void ThreadManager::DoGDBJobQueueWork()
 		JobQueueRef jobQueue = GDBJobQueue->Pop();
 		if (jobQueue == nullptr)
 			break;
-
 		jobQueue->Execute(dbConn);
 	}
 

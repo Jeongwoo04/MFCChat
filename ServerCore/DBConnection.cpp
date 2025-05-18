@@ -1,4 +1,4 @@
-#include "pch.h"
+ï»¿#include "pch.h"
 #include "DBConnection.h"
 
 /*----------------
@@ -7,11 +7,11 @@
 
 bool DBConnection::Connect(SQLHENV henv, const WCHAR* connectionString)
 {
-	// connection handle ÇÒ´ç
+	// connection handle í• ë‹¹
 	if (::SQLAllocHandle(SQL_HANDLE_DBC, henv, &_connection) != SQL_SUCCESS)
 		return false;
 
-	// db ¿¬µ¿
+	// db ì—°ë™
 	WCHAR stringBuffer[MAX_PATH] = { 0 };
 	::wcscpy_s(stringBuffer, connectionString);
 
@@ -29,7 +29,7 @@ bool DBConnection::Connect(SQLHENV henv, const WCHAR* connectionString)
 		SQL_DRIVER_NOPROMPT
 	);
 	
-	// statement handle ÇÒ´ç
+	// statement handle í• ë‹¹
 	if (::SQLAllocHandle(SQL_HANDLE_STMT, _connection, &_statement) != SQL_SUCCESS)
 		return false;
 
@@ -38,7 +38,7 @@ bool DBConnection::Connect(SQLHENV henv, const WCHAR* connectionString)
 
 void DBConnection::Clear()
 {
-	// ÇÒ´ç ¹ŞÀº ÇÚµé ´İ±â
+	// í• ë‹¹ ë°›ì€ í•¸ë“¤ ë‹«ê¸°
 	if (_connection != SQL_NULL_HANDLE)
 	{
 		::SQLFreeHandle(SQL_HANDLE_DBC, _connection);
@@ -52,7 +52,7 @@ void DBConnection::Clear()
 	}
 }
 
-// sql query ½ÇÇà¹®
+// sql query ì‹¤í–‰ë¬¸
 bool DBConnection::Execute(const WCHAR* query)
 {
 	SQLRETURN ret = ::SQLExecDirectW(_statement, (SQLWCHAR*)query, SQL_NTSL);
@@ -63,7 +63,7 @@ bool DBConnection::Execute(const WCHAR* query)
 	return false;
 }
 
-// µ¥ÀÌÅÍ ±Ü¾î¿À±â
+// ë°ì´í„° ê¸ì–´ì˜¤ê¸°
 bool DBConnection::Fetch()
 {
 	SQLRETURN ret = ::SQLFetch(_statement);
@@ -94,7 +94,7 @@ int32 DBConnection::GetRowCount()
 	return -1;
 }
 
-// »ç¿ëÇÏ±â Àü ¸ÊÇÎµÈ °ª ÃÊ±âÈ­
+// ì‚¬ìš©í•˜ê¸° ì „ ë§µí•‘ëœ ê°’ ì´ˆê¸°í™”
 void DBConnection::Unbind()
 {
 	::SQLFreeStmt(_statement, SQL_UNBIND);
@@ -244,7 +244,7 @@ bool DBConnection::BindParam(SQLUSMALLINT paramIndex, SQLSMALLINT cType, SQLSMAL
 //}
 
 bool DBConnection::BindCol(SQLUSMALLINT columnIndex, SQLSMALLINT cType, SQLULEN len, SQLPOINTER value, SQLLEN* index) {
-	// SQL_C_WCHAR·Î ¼³Á¤ÇØ UTF-16 ¹®ÀÚ¿­À» ¿Ã¹Ù¸£°Ô Ã³¸®
+	// SQL_C_WCHARë¡œ ì„¤ì •í•´ UTF-16 ë¬¸ìì—´ì„ ì˜¬ë°”ë¥´ê²Œ ì²˜ë¦¬
 	SQLRETURN ret = ::SQLBindCol(_statement, columnIndex, cType, value, len, index);
 	if (ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO) {
 		HandleError(ret);
@@ -268,7 +268,7 @@ void DBConnection::HandleError(SQLRETURN ret)
 
 	while (true)
 	{
-		// ¹ß»ıµÈ error msg ÃßÃâ
+		// ë°œìƒëœ error msg ì¶”ì¶œ
 		errorRet = ::SQLGetDiagRecW(
 			SQL_HANDLE_STMT,
 			_statement,
@@ -287,7 +287,10 @@ void DBConnection::HandleError(SQLRETURN ret)
 			break;
 
 		// TODO : Log
-		wcout.imbue(locale("kor"));
+		//wcout.imbue(locale("kor"));
+		wcout << "[DB ERROR] SqlState: " << sqlState
+			<< ", NativeError: " << nativeErr
+			<< ", Message: " << errMsg << endl;
 
 		index++;
 	}

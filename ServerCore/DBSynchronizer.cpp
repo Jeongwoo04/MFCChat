@@ -451,7 +451,14 @@ void DBSynchronizer::ExecuteUpdateQueries()
 		for (String& query : _updateQueries[step])
 		{
 			_dbConn.Unbind();
-			ASSERT_CRASH(_dbConn.Execute(query.c_str()));
+			bool result = _dbConn.Execute(query.c_str());
+			if (!result)
+			{
+				// 쿼리 실패 로그 남기고, 원인 출력
+				std::cerr << "Failed query at step " << static_cast<int>(step)
+					<< ": " << query.c_str() << std::endl;
+			}
+			//ASSERT_CRASH(_dbConn.Execute(query.c_str()));
 		}
 	}
 }
