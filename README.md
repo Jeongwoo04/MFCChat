@@ -19,10 +19,23 @@ DBConnection Pop -> nullptr 체크 (spin 2회)<br/>
 
 패킷 설계 수정. GameSession / Player / Room 등 수정<br/>
 
-Client->Conncet->Server->Login->DBConnect->Fail or Success->Enter->Broadcast 완료.<br/>
-TODO : DB message Save 및 xml parser 수정. Out 추가. -> spInsertChatMessage 최적화<br/>
--> Server에서 PlayerId와 lastMessageId를 hash로 갖고있기. -> Client에서 가지고 요청하면 유실될 가능성 있음<br/>
--> 1. C_CHAT이 오면? 2. S_CHAT으로 Broadcast할게 생기면? 2.으로 해당 Room에서의 Broadcast 기준. (전체 Game안 message에 대한 처리 X 방향으로)
+Client->Conncet->Server->Login->DBConnect->Fail or Success->Enter->Broadcast 완료.<br/><br/>
+
+
+DB message Save 및 xml parser 수정. Out 추가. spInsertChatMessage 최적화 (완료) <br/>
+Message에 serial 부여 -> DBAsync 실패 후 JobQueue에 재등록시 message 순서 보장 <br/>
+Server에서 PlayerId와 lastMessageId를 hash로 갖고있기. -> Client에서 가지고 요청하면 유실될 가능성 있음 (완료) <br/>
+S_CHAT으로 Broadcast할게 생기면 각 Room에서의 Broadcast 기준.<br/><br/>
+
+# SQL Server OUTPUT + SET과 SELECT 조합<br/>
+OUTPUT + SET -> OUT 파라미터에 값을 채움 -> <br/>
+Fetch() 대신 SQLMoreResults() 사용을 고려 <br/>
+OUTPUT만 받는다면 Fetch()는 오히려 실패할 수 있다. SQL Server는 OUTPUT 값은 결과셋을 다 넘긴 후에야 접근 가능. <br/>
+SELECT → Fetch()로 소비 <br/>
+OUTPUT → SQLMoreResults() 이후 바인딩된 값 접근 가능 -> SELECT + OUTPUT 조합이면 Fetch -> SQLMoreResults()<br/>
+OUTPUT만 있는 경우에도 SQLMoreResults()는 호출 필요 (ODBC는 커서 흐름을 단계별로 봄)<br/><br/>
+
+SELECT -> Fetch로 값을 가져옴<br/>
 
 <br/><br/><br/><br/>
 해결 : DoDBAsync 등록 후 실행x -> 디버깅 결과 JobQueue::Push 및 각 Job들의 Execute 실행까지 확인.<br/>
