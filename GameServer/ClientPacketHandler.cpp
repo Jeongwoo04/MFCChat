@@ -44,7 +44,7 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 	wstring wNameCopy = Convert::UTF8ToWStringDynamic(player->name);
 	wstring wMessageCopy = Convert::UTF8ToWStringDynamic(pkt.message());
 
-	GRoom->DoDBAsync(&Room::DBSaveMessage, gameSession, wMessageCopy);
+	GRoom->DoDBAsync(&Room::DBSaveMessage, gameSession, wMessageCopy, GRoom->_currentChatSerial++);
 	wcout << L"Send To Room) ID[" << player->playerId << "] " << "Name[" << wNameCopy << L"] Msg[" << wMessageCopy << L"]" << endl;
 
 	Protocol::S_CHAT chatPkt;
@@ -55,7 +55,7 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 	chatPkt.set_message(sendMsg);
 	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(chatPkt);
 
-	//GRoom->DoAsync(&Room::Broadcast, sendBuffer);
+	GRoom->DoAsync(&Room::Broadcast, sendBuffer);
 
 	return true;
 }
@@ -65,7 +65,7 @@ bool Handle_C_LEAVE(PacketSessionRef& session, Protocol::C_LEAVE& pkt)
 	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
 	PlayerRef player = gameSession->_currentPlayer;
 
-	//GRoom->DoAsync(&Room::Leave, player);
+	GRoom->DoAsync(&Room::Leave, player);
 	return true;
 }
 

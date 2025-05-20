@@ -29,13 +29,13 @@ static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
 static constexpr ::_pb::Message* const* file_default_instances = nullptr;
 
 const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\nEnum.proto\022\010Protocol*E\n\005Cause\022\010\n\004NONE\020"
-  "\000\022\020\n\014INVAILD_NAME\020\001\022\014\n\010DB_ERROR\020\002\022\022\n\016DUP"
-  "LICATE_NAME\020\003b\006proto3"
+  "\n\nEnum.proto\022\010Protocol*H\n\005Cause\022\010\n\004NONE\020"
+  "\000\022\020\n\014INVAILD_NAME\020\001\022\014\n\010DB_ERROR\020\002\022\025\n\021ALR"
+  "EADY_LOGGED_IN\020\003b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 101, descriptor_table_protodef_Enum_2eproto,
+    false, false, 104, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,

@@ -69,6 +69,13 @@ public:
 	}
 
 	template<typename T>
+	void BindParamOut(int32 idx, T& value)
+	{
+		_dbConnection.BindParamOut(idx + 1, &value, &_paramIndex[idx]);
+		_paramFlag |= (1LL << idx);
+	}
+
+	template<typename T>
 	void BindCol(int32 idx, T& value)
 	{
 		_dbConnection.BindCol(idx + 1, &value, &_columnIndex[idx]);

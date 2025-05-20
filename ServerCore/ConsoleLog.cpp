@@ -29,7 +29,7 @@ void ConsoleLog::WriteStdOut(Color color, const WCHAR* format, ...)
 	va_end(ap);
 
 	//std::wcout.imbue(std::locale("kor"));  // 한국어 로케일 설정
-	std::wcout << buffer << std::endl;
+	wcout << buffer << std::endl;
 
 	// 버퍼 비우기
 	fflush(stdout);

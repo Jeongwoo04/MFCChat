@@ -28,6 +28,8 @@
 		<Column name="player_id" type="int" notnull="true" />
 		<Column name="message" type="nvarchar(200)" notnull="true" />
 		<Column name="timestamp" type="datetime" notnull="true" />
+		<Column name="serial" type="bigint" notnull="true" default="0" desc="Room 내 채팅 순번" />
+
 		<Index type="clustered">
 			<PrimaryKey/>
 			<Column name="message_id"/>
@@ -35,14 +37,19 @@
 		<Index type="nonclustered">
 			<Column name="player_id"/>
 		</Index>
+		<Index type="nonclustered">
+			<Column name="serial"/>
+		</Index>
 	</Table>
 
 	<Procedure name="spInsertPlayer">
 		<Param name="@name" type="nvarchar(100)" />
+		<Param name="@player_id" type="int" out="true" />
 		<Body>
 			<![CDATA[
-        INSERT INTO [dbo].[Player] ([name]) VALUES (@name);
-        ]]>
+			INSERT INTO [dbo].[Player] ([name]) VALUES (@name);
+			SET @player_id = SCOPE_IDENTITY();
+			]]>
 		</Body>
 	</Procedure>
 	<Procedure name="spGetPlayerIdByName">
@@ -50,8 +57,8 @@
 		<Column name="player_id" type="int" />
 		<Body>
 			<![CDATA[
-        SELECT player_id FROM [dbo].[Player] WHERE [name] = @name;
-        ]]>
+			SELECT player_id FROM [dbo].[Player] WHERE [name] = @name;
+			]]>
 		</Body>
 	</Procedure>
 	<Procedure name="spInsertLogin">
@@ -59,33 +66,34 @@
 		<Param name="@login_time" type="datetime" />
 		<Body>
 			<![CDATA[
-        INSERT INTO [dbo].[Login] ([player_id], [login_time]) VALUES (@player_id, @login_time);
-      ]]>
+			INSERT INTO [dbo].[Login] ([player_id], [login_time]) VALUES (@player_id, @login_time);
+			]]>
 		</Body>
 	</Procedure>
 	<Procedure name="spInsertChatMessage">
 		<Param name="@player_id" type="int" />
 		<Param name="@message" type="nvarchar(200)" />
 		<Param name="@timestamp" type="datetime" />
+		<Param name="@serial" type="bigint" />
 		<Param name="@message_id" type="int" out="true" />
 		<Body>
 			<![CDATA[
-			INSERT INTO [dbo].[ChatMessage] ([player_id], [message], [timestamp])
-			VALUES (@player_id, @message, @timestamp);
+			INSERT INTO [dbo].[ChatMessage] ([player_id], [message], [timestamp], [serial])
+			VALUES (@player_id, @message, @timestamp, @serial);
 			
 			SET @message_id = SCOPE_IDENTITY();
-		]]>
+			]]>
 		</Body>
 	</Procedure>
 	<Procedure name="spGetRecentChatMessages">
 		<Param name="@lastMessageId" type="int" />
 		<Body>
 			<![CDATA[
-        SELECT message_id, player_id, message, timestamp 
-        FROM [dbo].[ChatMessage] 
-        WHERE message_id > @lastMessageId 
-        ORDER BY message_id ASC;
-      ]]>
+			SELECT message_id, player_id, message, timestamp
+			FROM [dbo].[ChatMessage]
+			WHERE message_id > @lastMessageId
+			ORDER BY message_id ASC;
+			]]>
 		</Body>
 	</Procedure>
 </GameDB>

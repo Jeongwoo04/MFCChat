@@ -51,13 +51,13 @@ enum Cause : int {
   NONE = 0,
   INVAILD_NAME = 1,
   DB_ERROR = 2,
-  DUPLICATE_NAME = 3,
+  ALREADY_LOGGED_IN = 3,
   Cause_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   Cause_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool Cause_IsValid(int value);
 constexpr Cause Cause_MIN = NONE;
-constexpr Cause Cause_MAX = DUPLICATE_NAME;
+constexpr Cause Cause_MAX = ALREADY_LOGGED_IN;
 constexpr int Cause_ARRAYSIZE = Cause_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* Cause_descriptor();

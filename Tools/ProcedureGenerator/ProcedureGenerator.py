@@ -1,6 +1,7 @@
 import argparse
 import jinja2
 import XmlDBParser
+import sys
 
 def main():
     arg_parser = argparse.ArgumentParser(description = 'StoredProcedure Generator')
@@ -14,6 +15,11 @@ def main():
 
     parser = XmlDBParser.XmlDBParser()
     parser.parse_xml(args.path)
+    
+    for proc in parser.procedures:
+        print(f"Procedure: {proc.name}")
+        for param in proc.params:
+            print(f"Param name={param.name}, type={param.type}, is_out={param.is_out}")
 
     file_loader = jinja2.FileSystemLoader('Templates')
     env = jinja2.Environment(loader=file_loader)

@@ -43,6 +43,9 @@ class Param:
         name = node.attrib['name'].replace('@', '')
         self.name = name[0].upper() + name[1:]
         self.type = ReplaceType(node.attrib['type'])
+        
+        out_attr = node.attrib.get('out', '').strip().lower()
+        self.is_out = out_attr in ('true', '1', 'yes')
 
 class Column:
     def __init__(self, name, type):

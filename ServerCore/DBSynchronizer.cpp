@@ -104,6 +104,14 @@ bool DBSynchronizer::Synchronize(const WCHAR* path)
 	return true;
 }
 
+wstring Trim(const std::wstring& s)
+{
+	size_t start = s.find_first_not_of(L" \t\n\r");
+	if (start == std::wstring::npos) return L"";
+	size_t end = s.find_last_not_of(L" \t\n\r");
+	return s.substr(start, end - start + 1);
+}
+
 void DBSynchronizer::ParseXmlDB(const WCHAR* path)
 {
 	XmlNode root;
@@ -154,7 +162,9 @@ void DBSynchronizer::ParseXmlDB(const WCHAR* path)
 				CRASH("Invalid Index Type");
 
 			i->_primaryKey = index.FindChild(L"PrimaryKey").IsValid();
-			i->_uniqueConstraint = index.FindChild(L"UniqueKey").IsValid();
+			i->_uniqueConstraint =
+				index.FindChild(L"UniqueKey").IsValid() || // <UniqueKey/> Áö¿ø
+				index.GetBoolAttr(L"unique", false);
 
 			Vector<XmlNode> columns = index.FindChildren(L"Column");
 			for (XmlNode& column : columns)
@@ -184,6 +194,7 @@ void DBSynchronizer::ParseXmlDB(const WCHAR* path)
 			DBModel::Param param;
 			param._name = paramNode.GetStringAttr(L"name");
 			param._type = paramNode.GetStringAttr(L"type");
+			param._isOut = Trim(paramNode.GetStringAttr(L"out")) == L"true";
 			p->_parameters.push_back(param);
 		}
 
@@ -432,7 +443,7 @@ void DBSynchronizer::CompareDBModel()
 			else
 			{
 				_updateQueries[UpdateStep::CreateIndex].push_back(DBModel::Helpers::Format(
-					L"CREATE %s INDEX [%s] ON [dbo].[%s] (%s)",
+					L"CREATE %ls INDEX [%s] ON [dbo].[%s] (%s)",
 					xmlIndex->GetTypeText().c_str(),
 					xmlIndex->CreateName(xmlTable->_name).c_str(),
 					xmlTable->_name.c_str(),

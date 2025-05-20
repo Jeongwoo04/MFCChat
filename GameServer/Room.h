@@ -6,17 +6,20 @@ using PlayerRef = shared_ptr<class Player>;
 class Room : public JobQueue
 {
 public:
+	int64 _currentChatSerial = 1;
+
+public:
 	void Enter(GameSessionRef gameSession);
 	void Leave(PlayerRef player);
-	void Broadcast(GameSessionRef gameSession, SendBufferRef sendBuffer);
+	void Broadcast(SendBufferRef sendBuffer);
 	void BroadcastOthers(GameSessionRef gameSession, SendBufferRef sendBuffer);
 
 	void SendLoginFail(GameSessionRef gameSession, Protocol::Cause cause, string msg);
 
 	void DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, string name);
-	void DBSaveMessage(DBConnection* dbConn, GameSessionRef gameSession, wstring msg);
+	void DBSaveMessage(DBConnection* dbConn, GameSessionRef gameSession, wstring msg, int64 serial);
 
-	PlayerRef FindPlayer(uint64 playerId);
+	//PlayerRef FindPlayer(uint64 playerId);
 
 public:
 	USE_LOCK;

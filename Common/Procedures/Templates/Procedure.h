@@ -7,17 +7,21 @@ public:
 	{{proc.name}}(DBConnection& conn) : DBBind(conn, L"{CALL dbo.sp{{ proc.name }}{{ proc.questions }}}") { }
 
 {%- for param in proc.params %}
-  {%- if param.type == 'nvarchar' %}
-	template<int32 N> void In_{{param.name}}(WCHAR(&v)[N]) { BindParam({{loop.index - 1}}, v); };
-	template<int32 N> void In_{{param.name}}(const WCHAR(&v)[N]) { BindParam({{loop.index - 1}}, v); };
-	void In_{{param.name}}(WCHAR* v, int32 count) { BindParam({{loop.index - 1}}, v, count); };
-	void In_{{param.name}}(const WCHAR* v, int32 count) { BindParam({{loop.index - 1}}, v, count); };
-  {%- elif param.type == 'varbinary' %}
-	template<typename T, int32 N> void In_{{param.name}}(T(&v)[N]) { BindParam({{loop.index - 1}}, v); };
-	template<typename T> void In_{{param.name}}(T* v, int32 count) { BindParam({{loop.index - 1}}, v, count); };
+  {%- if param.is_out == true or param.is_out == 'True' %}
+    void Out_{{param.name}}({{param.type}}& v) { BindParamOut({{loop.index - 1}}, v); };
   {%- else %}
-	void In_{{param.name}}({{param.type}}& v) { BindParam({{loop.index - 1}}, v); };
-	void In_{{param.name}}({{param.type}}&& v) { _{{lower_first(param.name)}} = std::move(v); BindParam({{loop.index - 1}}, _{{lower_first(param.name)}}); };
+    {%- if param.type == 'nvarchar' %}
+      template<int32 N> void In_{{param.name}}(WCHAR(&v)[N]) { BindParam({{loop.index - 1}}, v); };
+      template<int32 N> void In_{{param.name}}(const WCHAR(&v)[N]) { BindParam({{loop.index - 1}}, v); };
+      void In_{{param.name}}(WCHAR* v, int32 count) { BindParam({{loop.index - 1}}, v, count); };
+      void In_{{param.name}}(const WCHAR* v, int32 count) { BindParam({{loop.index - 1}}, v, count); };
+    {%- elif param.type == 'varbinary' %}
+      template<typename T, int32 N> void In_{{param.name}}(T(&v)[N]) { BindParam({{loop.index - 1}}, v); };
+      template<typename T> void In_{{param.name}}(T* v, int32 count) { BindParam({{loop.index - 1}}, v, count); };
+    {%- else %}
+      void In_{{param.name}}({{param.type}}& v) { BindParam({{loop.index - 1}}, v); };
+      void In_{{param.name}}({{param.type}}&& v) { _{{lower_first(param.name)}} = std::move(v); BindParam({{loop.index - 1}}, _{{lower_first(param.name)}}); };
+    {%- endif %}
   {%- endif %}
 {%- endfor %}
 
@@ -33,7 +37,7 @@ public:
 
 private:
 {%- for param in proc.params %}
-  {%- if param.type == 'int32' or param.type == 'TIMESTAMP_STRUCT' %}
+  {%- if param.type == 'int32' or param.type == 'int64' or param.type == 'TIMESTAMP_STRUCT' %}
 	{{param.type}} _{{lower_first(param.name)}} = {};
   {%- endif %}
 {%- endfor %}

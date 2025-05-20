@@ -134,10 +134,14 @@ String Procedure::GenerateParamString()
 	const int32 size = static_cast<int32>(_parameters.size());
 	for (int32 i = 0; i < size; i++)
 	{
+		str += DBModel::Helpers::Format(L"\t%s %s", _parameters[i]._name.c_str(), _parameters[i]._type.c_str());
+		
+		// 아웃 파라미터라면 OUTPUT 추가
+		if (_parameters[i]._isOut)
+			str += L" OUTPUT";
+
 		if (i < size - 1)
-			str += DBModel::Helpers::Format(L"\t%s %s,\n", _parameters[i]._name.c_str(), _parameters[i]._type.c_str());
-		else
-			str += DBModel::Helpers::Format(L"\t%s %s", _parameters[i]._name.c_str(), _parameters[i]._type.c_str());
+			str += L",\n";
 	}
 
 	return str;

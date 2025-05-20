@@ -20,7 +20,6 @@ struct OtherPlayerInfo
 class ServerSession : public PacketSession
 {
 public:
-	ServerSession() { };
 	ServerSession(CChatClientDlg* dig) : _dig(dig) { }
 	~ServerSession()
 	{
@@ -81,6 +80,6 @@ public:
 	unordered_map<uint64, OtherPlayerInfo> _otherPlayers;
 
 private:
-	string _name;
+	string _name = "";
 };
 

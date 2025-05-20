@@ -37,6 +37,26 @@ public:
 	bool			BindParam(int32 paramIndex, const WCHAR* str, SQLLEN* index);
 	bool			BindParam(int32 paramIndex, const BYTE* bin, int32 size, SQLLEN* index);
 
+	bool BindParamOut(int32 paramIndex, bool* value, SQLLEN* index);
+
+	bool BindParamOut(int32 paramIndex, float* value, SQLLEN* index);
+
+	bool BindParamOut(int32 paramIndex, double* value, SQLLEN* index);
+
+	bool BindParamOut(int32 paramIndex, int8* value, SQLLEN* index);
+
+	bool BindParamOut(int32 paramIndex, int16* value, SQLLEN* index);
+
+	bool BindParamOut(int32 paramIndex, int32* value, SQLLEN* index);
+
+	bool BindParamOut(int32 paramIndex, int64* value, SQLLEN* index);
+
+	bool BindParamOut(int32 paramIndex, TIMESTAMP_STRUCT* value, SQLLEN* index);
+
+	bool BindParamOut(int32 paramIndex, const WCHAR* str, SQLLEN* index);
+
+	bool BindParamOut(int32 paramIndex, const BYTE* bin, int32 size, SQLLEN* index);
+
 	// 데이터를 받아 올 때
 	bool			BindCol(int32 columnIndex, bool* value, SQLLEN* index);
 	bool			BindCol(int32 columnIndex, float* value, SQLLEN* index);
@@ -51,8 +71,10 @@ public:
 
 public:
 	bool			BindParam(SQLUSMALLINT paramIndex, SQLSMALLINT cType, SQLSMALLINT sqlType, SQLULEN len, SQLPOINTER ptr, SQLLEN* index);
+	bool			BindParamOut(SQLUSMALLINT paramIndex, SQLSMALLINT cType, SQLSMALLINT sqlType, SQLULEN len, SQLPOINTER ptr, SQLLEN* index);
 	bool			BindCol(SQLUSMALLINT columnIndex, SQLSMALLINT cType, SQLULEN len, SQLPOINTER value, SQLLEN* index);
 	void			HandleError(SQLRETURN ret);
+	bool			MoreResults();
 
 private:
 	SQLHDBC			_connection = SQL_NULL_HANDLE;
