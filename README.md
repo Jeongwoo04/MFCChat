@@ -21,6 +21,10 @@ DBConnection Pop -> nullptr 체크 (spin 2회)<br/>
 
 Client->Conncet->Server->Login->DBConnect->Fail or Success->Enter->Broadcast 완료.<br/><br/>
 
+DoDBAsync 등록 후 실행x -> 디버깅 결과 JobQueue::Push 및 각 Job들의 Execute 실행까지 확인.<br/>
+-> LCurrentJobQueue 가 기존 JobQueue랑 달리 DBJobQueue에선 첫번째 접근 쓰레드가 처리를 안해줘서 그런가? <br/>
+-> DBSave 안에서 sql Execute 예외처리 추가 -> GlobalQueue에서 꺼내올때 문제? <br/>
+Job과 DBJob 분리 확실히 하기. _jobCount와 _dbJobCount 따로 사용하기. 공유하게되면 Worker에서 기아 발생<br/><br/>
 
 DB message Save 및 xml parser 수정. Out 추가. spInsertChatMessage 최적화 (완료) <br/>
 Message에 serial 부여 -> DBAsync 실패 후 JobQueue에 재등록시 message 순서 보장 <br/>
@@ -37,10 +41,13 @@ OUTPUT만 있는 경우에도 SQLMoreResults()는 호출 필요 (ODBC는 커서 
 
 SELECT -> Fetch로 값을 가져옴<br/>
 
+PING / PONG 처리. Client Ping <-> Server Pong -> Client Pong <-> Server Ping 으로 변경<br/>
+Server에서 Ping 보내는 WorkerThread 하나 추가. 확장성 고려. RoomId를 가질경우. RoomManager에서 각 Room 의 BroadcastPing 호출하게끔. 현재는 하나의 룸<br/>
+Session 관리 : 기존 Set<GameSessionRef> 에서 unordered_map<sessionId, GameSessionRef> 로 변경 -> SessionId로 관리할 수 있게.<br/>
+Enter/Leave 패킷으로 처리 -> Enter/Leave 에서 본인에게 Send + Spawn/Despawn 으로 타인에게 Broadcast 로 나눠서 보내기.<br/>
+
 <br/><br/><br/><br/>
-해결 : DoDBAsync 등록 후 실행x -> 디버깅 결과 JobQueue::Push 및 각 Job들의 Execute 실행까지 확인.<br/>
--> LCurrentJobQueue 가 기존 JobQueue랑 달리 DBJobQueue에선 첫번째 접근 쓰레드가 처리를 안해줘서 그런가? <br/>
--> DBSave 안에서 sql Execute 예외처리 로그 추가. -> 잘 실행됨. -> GlobalQueue에서 꺼내올때 문제가 있나? <br/>
-Atomic 인자를 공유해서 쓰지 맙시다. 정말 별짓 다했는데 _jobCount 를 왜 따로 안했지.. 쨋든 해결 <br/><br/>
+TODO : DB Worker, DBJob 분리. 버그 수정.
+TODO : XML Parser에 OUTPUT 파싱 추가. SELECT 와 OUTPUT + SET 조합 jinja tool 자동 생성 코드 템플릿 추가. Binding 함수 세분화.<br/>
 TODO : Client 강제 종료시 Server Crash. -> DBConnection 을 꺼내온 상태로 Worker가 돌아가다 삭제된 iterator를 참조함.<br/>
 TODO : Client <-> Server Ping / Pong 추가
