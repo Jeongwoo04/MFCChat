@@ -13,8 +13,10 @@ enum : uint16
 	PKT_S_CHAT = 1004,
 	PKT_C_LEAVE = 1005,
 	PKT_S_LEAVE = 1006,
-	PKT_C_PING = 1007,
-	PKT_S_PONG = 1008,
+	PKT_S_SPAWN = 1007,
+	PKT_S_DESPAWN = 1008,
+	PKT_C_PONG = 1009,
+	PKT_S_PING = 1010,
 };
 
 // Custom Handlers
@@ -22,7 +24,7 @@ bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len);
 bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt);
 bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt);
 bool Handle_C_LEAVE(PacketSessionRef& session, Protocol::C_LEAVE& pkt);
-bool Handle_C_PING(PacketSessionRef& session, Protocol::C_PING& pkt);
+bool Handle_C_PONG(PacketSessionRef& session, Protocol::C_PONG& pkt);
 
 class ClientPacketHandler
 {
@@ -34,7 +36,7 @@ public:
 		GPacketHandler[PKT_C_LOGIN] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_LOGIN>(Handle_C_LOGIN, session, buffer, len); };
 		GPacketHandler[PKT_C_CHAT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_CHAT>(Handle_C_CHAT, session, buffer, len); };
 		GPacketHandler[PKT_C_LEAVE] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_LEAVE>(Handle_C_LEAVE, session, buffer, len); };
-		GPacketHandler[PKT_C_PING] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_PING>(Handle_C_PING, session, buffer, len); };
+		GPacketHandler[PKT_C_PONG] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_PONG>(Handle_C_PONG, session, buffer, len); };
 	}
 
 	static bool HandlePacket(PacketSessionRef& session, BYTE* buffer, int32 len)
@@ -46,7 +48,9 @@ public:
 	static SendBufferRef MakeSendBuffer(Protocol::S_ENTER& pkt) { return MakeSendBuffer(pkt, PKT_S_ENTER); }
 	static SendBufferRef MakeSendBuffer(Protocol::S_CHAT& pkt) { return MakeSendBuffer(pkt, PKT_S_CHAT); }
 	static SendBufferRef MakeSendBuffer(Protocol::S_LEAVE& pkt) { return MakeSendBuffer(pkt, PKT_S_LEAVE); }
-	static SendBufferRef MakeSendBuffer(Protocol::S_PONG& pkt) { return MakeSendBuffer(pkt, PKT_S_PONG); }
+	static SendBufferRef MakeSendBuffer(Protocol::S_SPAWN& pkt) { return MakeSendBuffer(pkt, PKT_S_SPAWN); }
+	static SendBufferRef MakeSendBuffer(Protocol::S_DESPAWN& pkt) { return MakeSendBuffer(pkt, PKT_S_DESPAWN); }
+	static SendBufferRef MakeSendBuffer(Protocol::S_PING& pkt) { return MakeSendBuffer(pkt, PKT_S_PING); }
 
 private:
 	template<typename PacketType, typename ProcessFunc>

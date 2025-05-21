@@ -72,12 +72,15 @@ public:
 public:
 	void SetName(const string& name) { _name = name; }
 	const string& GetName() const { return _name; }
+	void SetLastPongTime(uint64 lastRecvTick) { _lastRecvTick = lastRecvTick; }
 
 public:
 	CChatClientDlg* _dig;
 
 public:
 	unordered_map<uint64, OtherPlayerInfo> _otherPlayers;
+	uint64_t _lastRecvTick;
+	
 
 private:
 	string _name = "";

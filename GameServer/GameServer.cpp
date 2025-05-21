@@ -56,6 +56,18 @@ void DoDBWorkerJob()
 	}
 }
 
+void DoPingWorkerJob()
+{
+	while (true)
+	{
+		this_thread::sleep_for(5s);
+
+		// TODO : Room마다 Ping 전송 예약
+
+		GRoom->DoAsync(&Room::BroadcastPing);
+	}
+}
+
 void InitConsole()
 {
 	_setmode(_fileno(stdout), _O_U16TEXT);
@@ -100,6 +112,7 @@ int main()
 	}
 	// Main Thread
 	DoWorkerJob(service);
+	DoPingWorkerJob();
 
 	GThreadManager->Join();
 }

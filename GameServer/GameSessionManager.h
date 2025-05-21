@@ -9,16 +9,16 @@ class GameSessionManager
 public:
 	void	Add(GameSessionRef session);
 	void	Remove(GameSessionRef session);
+	GameSessionRef Find(uint64 sessionId);
 
 	// 전체 메시지
 	void	Broadcast(SendBufferRef sendBuffer);
 
-	//void	CheckClientAlive(const Set<GameSessionRef>& sessions);
+	void	Kick(uint64 sessionId);
 
 private:
 	USE_LOCK;
-
-	Set<GameSessionRef>	_sessions;
+	unordered_map<uint64, GameSessionRef>	_sessions;
 };
 
 //extern GameSessionManager GSessionManager;

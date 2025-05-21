@@ -65,21 +65,16 @@ bool Handle_C_LEAVE(PacketSessionRef& session, Protocol::C_LEAVE& pkt)
 	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
 	PlayerRef player = gameSession->_currentPlayer;
 
-	GRoom->DoAsync(&Room::Leave, player);
+	GRoom->DoAsync(&Room::Leave , player);
 	return true;
 }
 
-bool Handle_C_PING(PacketSessionRef& session, Protocol::C_PING& pkt)
+bool Handle_C_PONG(PacketSessionRef& session, Protocol::C_PONG& pkt)
 {
 	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
 
-	//gameSession->_lastPingTime.store(now);
+	gameSession->_lastPongTime = ::GetTickCount64();
 
-	//Protocol::S_PONG pongPkt;
-	//pongPkt.set_timestamp(now);
-
-	//SendBufferRef sendBuffer = ClientPacketHandler::MakeSendBuffer(pongPkt);
-	//session->Send(sendBuffer);
-
+	cout << "PONG from Session: " << gameSession->GetSessionId() << endl;
 	return true;
 }

@@ -49,22 +49,13 @@ bool Handle_S_ENTER(PacketSessionRef& session, Protocol::S_ENTER& pkt)
 {
 	// TODO : 입장 UI -> 게임 입장
 	ServerSessionRef serverSession = static_pointer_cast<ServerSession>(session);
-	if (serverSession->GetName() == "")
-	{
-		serverSession->SetName(pkt.name());
-		for (const auto& protoInfo : pkt.players())
-		{
-			OtherPlayerInfo newInfo;
-			newInfo.playerId = protoInfo.player_id();
-			newInfo.name = protoInfo.name();
-			serverSession->_otherPlayers[newInfo.playerId] = newInfo;
-		}
-	}
-	else
+
+	serverSession->SetName(pkt.name());
+	for (const auto& protoInfo : pkt.players())
 	{
 		OtherPlayerInfo newInfo;
-		newInfo.playerId = pkt.player_id();
-		newInfo.name = pkt.name();
+		newInfo.playerId = protoInfo.player_id();
+		newInfo.name = protoInfo.name();
 		serverSession->_otherPlayers[newInfo.playerId] = newInfo;
 	}
 
@@ -86,39 +77,64 @@ bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
 bool Handle_S_LEAVE(PacketSessionRef& session, Protocol::S_LEAVE& pkt)
 {
 	ServerSessionRef serverSession = static_pointer_cast<ServerSession>(session);
-	unordered_map<uint64, OtherPlayerInfo> info = serverSession->_otherPlayers;
 	
-	auto it = info.find(pkt.player_id());
-	if (it == info.end())
-	{
-		serverSession->_dig->_isConnected = false;
-		serverSession->Disconnect(L"Leave");
-		serverSession->_otherPlayers.clear();
-		serverSession->SetName("");
+	serverSession->_dig->_isConnected = false;
+	serverSession->Disconnect(L"Leave");
+	serverSession->_otherPlayers.clear();
+	serverSession->SetName("");
 
-		string message = u8"채팅방을 나갔습니다.";
-		wstring wMessage = Convert::UTF8ToWStringDynamic(message);
+	// Lobby가 없어 강제 종료됨. 추후 Unity 클라를 사용한 프로그램에서 구현.
+	/*
+	string message = u8"채팅방을 나갔습니다.";
+	wstring wMessage = Convert::UTF8ToWStringDynamic(message);
 
-		serverSession->_dig->AddEventString(wMessage.c_str());
-	}
-	else
-	{
-		auto it = info.find(pkt.player_id());
-		if (it != info.end())
-		{
-			string message = u8"[" + it->second.name + u8"] 님이 채팅방을 나갔습니다.";
-			wstring wMessage = Convert::UTF8ToWStringDynamic(message);
-
-			serverSession->_dig->AddEventString(wMessage.c_str());
-			info.erase(it);
-		}
-	}
-	
+	serverSession->_dig->AddEventString(wMessage.c_str());
+	*/
+	serverSession->_otherPlayers.clear();
 
 	return true;
 }
 
-bool Handle_S_PONG(PacketSessionRef& session, Protocol::S_PONG& pkt)
+bool Handle_S_SPAWN(PacketSessionRef& session, Protocol::S_SPAWN& pkt)
 {
+	ServerSessionRef serverSession = static_pointer_cast<ServerSession>(session);
+	auto& players = serverSession->_otherPlayers;
+
+	OtherPlayerInfo newInfo;
+	newInfo.playerId = pkt.player_id();
+	newInfo.name = pkt.name();
+	players[newInfo.playerId] = newInfo;
+
+	return true;
+}
+
+bool Handle_S_DESPAWN(PacketSessionRef& session, Protocol::S_DESPAWN& pkt)
+{
+	ServerSessionRef serverSession = static_pointer_cast<ServerSession>(session);
+	auto& players = serverSession->_otherPlayers;
+
+	auto it = players.find(pkt.player_id());
+	if (it != players.end())
+	{
+		string message = u8"[" + it->second.name + u8"] 님이 채팅방을 나갔습니다.";
+		wstring wMessage = Convert::UTF8ToWStringDynamic(message);
+
+		serverSession->_dig->AddEventString(wMessage.c_str());
+		players.erase(it);
+	}
+
+	return true;
+}
+
+bool Handle_S_PING(PacketSessionRef& session, Protocol::S_PING& pkt)
+{
+	ServerSessionRef serverSession = static_pointer_cast<ServerSession>(session);
+
+	Protocol::C_PONG pongPkt;
+	pongPkt.set_timestamp(pkt.timestamp()); // echo back
+
+	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(pongPkt);
+	serverSession->Send(sendBuffer);
+
 	return true;
 }

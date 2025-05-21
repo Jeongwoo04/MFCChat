@@ -193,37 +193,6 @@ void CChatClientDlg::OnBnClickedSendBtn()
 	_serverSession->Send(sendBuffer);
 }
 
-/*
-void SendPingPeriodically(ServerSessionRef session, std::atomic<bool>& stopFlag)
-{
-	using namespace std::chrono_literals;
-
-	while (!stopFlag.load())
-	{
-		// C_PING 패킷 생성
-		Protocol::C_PING pingPkt;
-		pingPkt.set_timestamp(::GetTickCount64()); // 시간값 넣기
-
-		// 패킷 직렬화 & 버퍼 생성 (예시)
-		auto sendBuffer = ServerPacketHandler::MakeSendBuffer(pingPkt);
-
-		// 서버로 전송
-		session->Send(sendBuffer);
-
-		// 5초마다 한번씩 보낸다고 가정
-		std::this_thread::sleep_for(5s);
-	}
-}
-
-std::atomic<bool> pingThreadStopFlag{ false };
-std::thread pingThread;
-
-void StartPingThread(ServerSessionRef session)
-{
-	pingThread = std::thread(SendPingPeriodically, session, std::ref(pingThreadStopFlag));
-}
-*/
-
 void CChatClientDlg::OnBnClickedConnectBtn()
 {
 	// TODO: 여기에 컨트롤 알림 처리기 코드를 추가합니다.
@@ -271,9 +240,9 @@ void CChatClientDlg::OnBnClickedConnectBtn()
 			while (true)
 			{
 				service->GetIocpCore()->Dispatch();
+
 			}
 		});
-
 }
 
 void CChatClientDlg::OnOK()
@@ -282,7 +251,6 @@ void CChatClientDlg::OnOK()
 	// 모든 대화 목록 불러오기
 	return;
 }
-
 
 void CChatClientDlg::OnCancel()
 {

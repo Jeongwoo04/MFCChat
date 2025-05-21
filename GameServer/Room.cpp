@@ -16,17 +16,7 @@ void Room::Enter(GameSessionRef gameSession)
 	Protocol::S_ENTER enterPkt;
 	enterPkt.set_player_id(player->playerId);
 	enterPkt.set_name(player->name);
-	
-	// 타인에게 S_ENTER 전송
-	{
-		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(enterPkt);
-		for (auto& [id, p] : _players)
-		{
-			if (id == player->playerId)
-				continue;
-			p->ownerSession->Send(sendBuffer);
-		}
-	}
+
 	// 나에게 S_ENTER 전송
 	{
 		for (auto& [id, p] : _players)
@@ -42,8 +32,23 @@ void Room::Enter(GameSessionRef gameSession)
 		gameSession->Send(sendBuffer);
 	}
 	
+	// 타인에게 S_SPAWN 전송
+	{
+		Protocol::S_SPAWN spawnPkt;
 
-	// Room 다른 멤버에게 입장 알림
+		spawnPkt.set_player_id(player->playerId);
+		spawnPkt.set_name(player->name);
+
+		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(spawnPkt);
+		for (auto& [id, p] : _players)
+		{
+			if (id == player->playerId)
+				continue;
+			p->ownerSession->Send(sendBuffer);
+		}
+	}
+
+	// Room에 입장 S_CHAT 알림
 	{
 		Protocol::S_CHAT chatPkt;
 
@@ -56,19 +61,31 @@ void Room::Enter(GameSessionRef gameSession)
 		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(chatPkt);
 		wstring wMessage = Convert::UTF8ToWStringDynamic(message);
 		this->DoDBAsync(&Room::DBSaveMessage, gameSession, wMessage, _currentChatSerial++);
-		this->DoAsync(&Room::Broadcast, sendBuffer);
+		DoAsync(&Room::Broadcast, sendBuffer);
 	}
 }
 
 void Room::Leave(PlayerRef player)
 {
+	// 나에게 LEAVE 패킷 전송
+	{
+		Protocol::S_LEAVE pkt;
+		pkt.set_player_id(player->playerId);
+		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(pkt);
+
+		player->ownerSession->Send(sendBuffer);
+	}
+	
+	// 타인에게 DESPAWN 패킷 전송
+	{
+		Protocol::S_DESPAWN despawnPkt;
+		despawnPkt.set_player_id(player->playerId);
+		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(despawnPkt);
+
+		BroadcastOthers(player->ownerSession, sendBuffer);
+	}
+
 	_players.erase(player->playerId);
-
-	Protocol::S_LEAVE pkt;
-	pkt.set_player_id(player->playerId);
-	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(pkt);
-
-	this->DoAsync(&Room::Broadcast, sendBuffer);
 }
 
 void Room::Broadcast(SendBufferRef sendBuffer)
@@ -83,13 +100,24 @@ void Room::BroadcastOthers(GameSessionRef gameSession, SendBufferRef sendBuffer)
 {
 	for (auto& player : _players)
 	{
-		if (player.second == gameSession->_currentPlayer)
+		if (player.second->playerId == gameSession->_currentPlayer->playerId)
 			continue;
 
 		player.second->ownerSession->Send(sendBuffer);
 	}
 }
 
+void Room::BroadcastPing()
+{
+	using namespace std::chrono;
+	uint64 now = ::GetTickCount64();
+
+	Protocol::S_PING pingPkt;
+	pingPkt.set_timestamp(now);
+	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(pingPkt);
+
+	Broadcast(sendBuffer);
+}
 
 void Room::DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, string name)
 {
@@ -101,7 +129,6 @@ void Room::DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, stri
 	}
 
 	int32 playerId = -1;
-	//WCHAR dbName[50] = { };
 
 	// name으로 접속 -> playerId가 유일한 키. 중복 이름검사보단 중복 이름 접속 불가로.
 	// TODO : Account ID / PW -> MFC에선 그만..
@@ -164,6 +191,22 @@ void Room::SendLoginFail(GameSessionRef gameSession, Protocol::Cause cause, stri
 	pkt.set_message(msg);
 	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(pkt);
 	gameSession->Send(sendBuffer);
+}
+
+void Room::CheckPingTimeout()
+{
+	uint64 now = ::GetTickCount64();
+	for (auto& [id, player] : _players)
+	{
+		auto session = player->ownerSession;
+
+		// 5000ms = 5초 이상 응답 없으면 Disconnect
+		if ((now - session->_lastPongTime) >= 5000)
+		{
+			wcout << L"Kicking session: " << session->GetSessionId() << endl;
+			session->Disconnect(L"Kick Client : Client Dead");
+		}
+	}
 }
 
 //

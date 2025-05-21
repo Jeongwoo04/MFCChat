@@ -13,13 +13,14 @@ public:
 	void Leave(PlayerRef player);
 	void Broadcast(SendBufferRef sendBuffer);
 	void BroadcastOthers(GameSessionRef gameSession, SendBufferRef sendBuffer);
+	void BroadcastPing();
 
 	void SendLoginFail(GameSessionRef gameSession, Protocol::Cause cause, string msg);
 
 	void DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, string name);
 	void DBSaveMessage(DBConnection* dbConn, GameSessionRef gameSession, wstring msg, int64 serial);
 
-	//PlayerRef FindPlayer(uint64 playerId);
+	void CheckPingTimeout();
 
 public:
 	USE_LOCK;
