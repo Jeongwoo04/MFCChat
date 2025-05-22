@@ -14,7 +14,7 @@ class CChatClientDlg;
 struct OtherPlayerInfo
 {
 	uint64 playerId;
-	std::string name;
+	string name;
 };
 
 class ServerSession : public PacketSession
@@ -36,14 +36,6 @@ public:
 		CString str;
 		_dig->chatName.GetWindowTextW(str);
 		
-		//{
-		//	wstring wstr(str);
-
-		//	int size = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
-		//	string utf8Str(size - 1, 0);
-		//	WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &utf8Str[0], size, nullptr, nullptr);
-		//	loginPkt.set_name(utf8Str);
-		//}
 		loginPkt.set_name(CW2A(str, CP_UTF8));
 		
 		// TODO : webserver 외부 인증
@@ -72,14 +64,12 @@ public:
 public:
 	void SetName(const string& name) { _name = name; }
 	const string& GetName() const { return _name; }
-	void SetLastPongTime(uint64 lastRecvTick) { _lastRecvTick = lastRecvTick; }
 
 public:
 	CChatClientDlg* _dig;
 
 public:
 	unordered_map<uint64, OtherPlayerInfo> _otherPlayers;
-	uint64_t _lastRecvTick;
 	
 
 private:

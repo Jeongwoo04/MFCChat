@@ -60,7 +60,8 @@ void Room::Enter(GameSessionRef gameSession)
 
 		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(chatPkt);
 		wstring wMessage = Convert::UTF8ToWStringDynamic(message);
-		this->DoDBAsync(&Room::DBSaveMessage, gameSession, wMessage, _currentChatSerial++);
+		int32 retryCount = 0;
+		this->DoDBAsync(&Room::DBSaveMessage, gameSession, wMessage, _currentChatSerial++, retryCount);
 		DoAsync(&Room::Broadcast, sendBuffer);
 	}
 }
@@ -90,20 +91,24 @@ void Room::Leave(PlayerRef player)
 
 void Room::Broadcast(SendBufferRef sendBuffer)
 {
-	for (auto& player : _players)
+	for (auto& [id, player] : _players)
 	{
-		player.second->ownerSession->Send(sendBuffer);
+		auto session = player->ownerSession;
+		if (session && session->IsConnected())
+			session->Send(sendBuffer);
 	}
 }
 
 void Room::BroadcastOthers(GameSessionRef gameSession, SendBufferRef sendBuffer)
 {
-	for (auto& player : _players)
+	for (auto& [id, player] : _players)
 	{
-		if (player.second->playerId == gameSession->_currentPlayer->playerId)
+		if (player->playerId == gameSession->_currentPlayer->playerId)
 			continue;
 
-		player.second->ownerSession->Send(sendBuffer);
+		auto session = player->ownerSession;
+		if (session && session->IsConnected())
+			session->Send(sendBuffer);
 	}
 }
 
@@ -115,6 +120,8 @@ void Room::BroadcastPing()
 	Protocol::S_PING pingPkt;
 	pingPkt.set_timestamp(now);
 	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(pingPkt);
+
+	wcout << "Server Send : Broadcast Ping test. Time = " << now << endl;
 
 	Broadcast(sendBuffer);
 }
@@ -131,7 +138,7 @@ void Room::DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, stri
 	int32 playerId = -1;
 
 	// name으로 접속 -> playerId가 유일한 키. 중복 이름검사보단 중복 이름 접속 불가로.
-	// TODO : Account ID / PW -> MFC에선 그만..
+	// TODO : Account ID / PW -> Unity에서
 	SP::GetPlayerIdByName getPlayer(*dbConn);
 	getPlayer.In_Name(wName);
 	getPlayer.Out_Player_id(playerId);
@@ -164,7 +171,7 @@ void Room::DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, stri
 		}
 	}
 
-	// 3. 로그인 기록 저장
+	// 로그인 기록 저장
 	SP::InsertLogin insertLogin(*dbConn);
 	insertLogin.In_Player_id(playerId);
 	insertLogin.In_Login_time(Convert::GetCurrentTimestamp());
@@ -195,22 +202,34 @@ void Room::SendLoginFail(GameSessionRef gameSession, Protocol::Cause cause, stri
 
 void Room::CheckPingTimeout()
 {
+	if (_players.empty())
+		return;
+
 	uint64 now = ::GetTickCount64();
+	Vector<PlayerRef> timedOutPlayers;
+
+	// 순회 도중 Leave -> _players.erase 위험
 	for (auto& [id, player] : _players)
 	{
 		auto session = player->ownerSession;
 
-		// 5000ms = 5초 이상 응답 없으면 Disconnect
-		if ((now - session->_lastPongTime) >= 5000)
+		// 20초 이상 응답 없으면 Disconnect
+		if ((now - session->_lastPongTime) >= 20000)
 		{
 			wcout << L"Kicking session: " << session->GetSessionId() << endl;
-			session->Disconnect(L"Kick Client : Client Dead");
+			timedOutPlayers.push_back(player); // 목록에 추가
 		}
+	}
+
+	// 반복문이 끝난 뒤 안전하게 삭제
+	for (PlayerRef p : timedOutPlayers)
+	{
+		Leave(p);
 	}
 }
 
 //
-void Room::DBSaveMessage(DBConnection* dbConn, GameSessionRef gameSession, wstring wMsgCopy, int64 serial)
+void Room::DBSaveMessage(DBConnection* dbConn, GameSessionRef gameSession, wstring wMsgCopy, int64 serial, int32 retryCount)
 {
 	SP::InsertChatMessage insert(*dbConn);
 	insert.In_Player_id(gameSession->_currentPlayer->playerId);
@@ -222,15 +241,19 @@ void Room::DBSaveMessage(DBConnection* dbConn, GameSessionRef gameSession, wstri
 	if (!insert.Execute())
 	{
 		// TODO : Job 재등록
+		if (retryCount < 2)
+		{
+			DoDBAsync(&Room::DBSaveMessage, gameSession, wMsgCopy, serial, ++retryCount);
+		}
+		else
+		{
+			// 포기하고 로깅
+			wcout << L"[DB FATAL] 채팅 저장 실패 : Serial=" << serial;
+		}
 	}
 	while (dbConn->MoreResults()) {}
 	if (messageId <= 0)
 	{
-		// TODO : Job 재등록
+		// TODO : 
 	}
 }
-
-//PlayerRef Room::FindPlayer(uint64 playerId)
-//{
-//	return PlayerRef();
-//}

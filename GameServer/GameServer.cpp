@@ -68,6 +68,15 @@ void DoPingWorkerJob()
 	}
 }
 
+void MonitorThread()
+{
+	while (true)
+	{
+		this_thread::sleep_for(5s);
+		GRoom->DoAsync(&Room::CheckPingTimeout);
+	}
+}
+
 void InitConsole()
 {
 	_setmode(_fileno(stdout), _O_U16TEXT);
@@ -110,9 +119,15 @@ int main()
 				DoDBWorkerJob();
 			});
 	}
-	// Main Thread
-	DoWorkerJob(service);
-	DoPingWorkerJob();
+
+	GThreadManager->Launch([]()
+		{
+			DoPingWorkerJob();
+		});
+	GThreadManager->Launch([]()
+		{
+			MonitorThread();
+		});
 
 	GThreadManager->Join();
 }

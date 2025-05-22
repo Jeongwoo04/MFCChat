@@ -20,6 +20,7 @@ void Lock::WriteLock(const char* name)
 	// 아무도 소유 및 공유하고 있지 않을 때, 경합해서 소유권을 얻는다.
 	const int64 beginTick = ::GetTickCount64();
 	const uint32 desired = ((LThreadId << 16) & WRITE_THREAD_MASK);
+
 	while (true)
 	{
 		for (uint32 spinCount = 0; spinCount < MAX_SPIN_COUNT; spinCount++)

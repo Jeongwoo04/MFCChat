@@ -14,8 +14,6 @@ public:
 	// 전체 메시지
 	void	Broadcast(SendBufferRef sendBuffer);
 
-	void	Kick(uint64 sessionId);
-
 private:
 	USE_LOCK;
 	unordered_map<uint64, GameSessionRef>	_sessions;

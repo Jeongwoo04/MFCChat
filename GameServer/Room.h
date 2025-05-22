@@ -18,7 +18,7 @@ public:
 	void SendLoginFail(GameSessionRef gameSession, Protocol::Cause cause, string msg);
 
 	void DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, string name);
-	void DBSaveMessage(DBConnection* dbConn, GameSessionRef gameSession, wstring msg, int64 serial);
+	void DBSaveMessage(DBConnection* dbConn, GameSessionRef gameSession, wstring msg, int64 serial, int32 retryCount);
 
 	void CheckPingTimeout();
 

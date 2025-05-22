@@ -146,7 +146,7 @@ struct S_DESPAWNDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_DESPAWNDefaultTypeInternal _S_DESPAWN_default_instance_;
 PROTOBUF_CONSTEXPR C_PONG::C_PONG(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.timestamp_)*/int64_t{0}
+    /*decltype(_impl_.timestamp_)*/uint64_t{0u}
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct C_PONGDefaultTypeInternal {
   PROTOBUF_CONSTEXPR C_PONGDefaultTypeInternal()
@@ -159,7 +159,7 @@ struct C_PONGDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 C_PONGDefaultTypeInternal _C_PONG_default_instance_;
 PROTOBUF_CONSTEXPR S_PING::S_PING(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.timestamp_)*/int64_t{0}
+    /*decltype(_impl_.timestamp_)*/uint64_t{0u}
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct S_PINGDefaultTypeInternal {
   PROTOBUF_CONSTEXPR S_PINGDefaultTypeInternal()
@@ -326,7 +326,7 @@ const char descriptor_table_protodef_Protocol_2eproto[] PROTOBUF_SECTION_VARIABL
   "\021\n\tplayer_id\030\001 \001(\004\"*\n\007S_SPAWN\022\021\n\tplayer_"
   "id\030\001 \001(\004\022\014\n\004name\030\002 \001(\t\"\036\n\tS_DESPAWN\022\021\n\tp"
   "layer_id\030\001 \001(\004\"\033\n\006C_PONG\022\021\n\ttimestamp\030\001 "
-  "\001(\003\"\033\n\006S_PING\022\021\n\ttimestamp\030\001 \001(\003\"-\n\nPlay"
+  "\001(\004\"\033\n\006S_PING\022\021\n\ttimestamp\030\001 \001(\004\"-\n\nPlay"
   "erInfo\022\021\n\tplayer_id\030\001 \001(\004\022\014\n\004name\030\002 \001(\tb"
   "\006proto3"
   ;
@@ -2245,7 +2245,7 @@ inline void C_PONG::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.timestamp_){int64_t{0}}
+      decltype(_impl_.timestamp_){uint64_t{0u}}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -2273,7 +2273,7 @@ void C_PONG::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  _impl_.timestamp_ = int64_t{0};
+  _impl_.timestamp_ = uint64_t{0u};
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -2283,7 +2283,7 @@ const char* C_PONG::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // int64 timestamp = 1;
+      // uint64 timestamp = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
           _impl_.timestamp_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
@@ -2320,10 +2320,10 @@ uint8_t* C_PONG::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // int64 timestamp = 1;
+  // uint64 timestamp = 1;
   if (this->_internal_timestamp() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteInt64ToArray(1, this->_internal_timestamp(), target);
+    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(1, this->_internal_timestamp(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -2342,9 +2342,9 @@ size_t C_PONG::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // int64 timestamp = 1;
+  // uint64 timestamp = 1;
   if (this->_internal_timestamp() != 0) {
-    total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_timestamp());
+    total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_timestamp());
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -2423,7 +2423,7 @@ inline void S_PING::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.timestamp_){int64_t{0}}
+      decltype(_impl_.timestamp_){uint64_t{0u}}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -2451,7 +2451,7 @@ void S_PING::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  _impl_.timestamp_ = int64_t{0};
+  _impl_.timestamp_ = uint64_t{0u};
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -2461,7 +2461,7 @@ const char* S_PING::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // int64 timestamp = 1;
+      // uint64 timestamp = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
           _impl_.timestamp_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
@@ -2498,10 +2498,10 @@ uint8_t* S_PING::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // int64 timestamp = 1;
+  // uint64 timestamp = 1;
   if (this->_internal_timestamp() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteInt64ToArray(1, this->_internal_timestamp(), target);
+    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(1, this->_internal_timestamp(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -2520,9 +2520,9 @@ size_t S_PING::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // int64 timestamp = 1;
+  // uint64 timestamp = 1;
   if (this->_internal_timestamp() != 0) {
-    total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_timestamp());
+    total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_timestamp());
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);

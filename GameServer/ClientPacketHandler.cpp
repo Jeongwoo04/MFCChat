@@ -29,7 +29,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 	if (gameSession->_currentPlayer != nullptr)
 		return false;
 
-	const string& name = pkt.name();
+	string name = pkt.name();
 
 	GRoom->DoDBAsync(&Room::DBProcessLogin, gameSession, name);
 
@@ -44,14 +44,16 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 	wstring wNameCopy = Convert::UTF8ToWStringDynamic(player->name);
 	wstring wMessageCopy = Convert::UTF8ToWStringDynamic(pkt.message());
 
-	GRoom->DoDBAsync(&Room::DBSaveMessage, gameSession, wMessageCopy, GRoom->_currentChatSerial++);
+	int32 retryCount = 0;
+	GRoom->DoDBAsync(&Room::DBSaveMessage, gameSession, wMessageCopy, GRoom->_currentChatSerial++, retryCount);
 	wcout << L"Send To Room) ID[" << player->playerId << "] " << "Name[" << wNameCopy << L"] Msg[" << wMessageCopy << L"]" << endl;
 
 	Protocol::S_CHAT chatPkt;
 
+	chatPkt.set_message_id(GRoom->_currentChatSerial);
 	chatPkt.set_player_id(player->playerId);
 	chatPkt.set_name(player->name);
-	string sendMsg = u8"[" + player->name + u8"]:" + pkt.message();
+	const string& sendMsg = u8"[" + player->name + u8"]:" + pkt.message();
 	chatPkt.set_message(sendMsg);
 	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(chatPkt);
 
@@ -63,9 +65,8 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 bool Handle_C_LEAVE(PacketSessionRef& session, Protocol::C_LEAVE& pkt)
 {
 	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
-	PlayerRef player = gameSession->_currentPlayer;
 
-	GRoom->DoAsync(&Room::Leave , player);
+	gameSession->Disconnect(L"Client request leave");
 	return true;
 }
 
@@ -75,6 +76,6 @@ bool Handle_C_PONG(PacketSessionRef& session, Protocol::C_PONG& pkt)
 
 	gameSession->_lastPongTime = ::GetTickCount64();
 
-	cout << "PONG from Session: " << gameSession->GetSessionId() << endl;
+	wcout << "PONG from Session: " << gameSession->GetSessionId() << endl;
 	return true;
 }

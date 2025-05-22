@@ -1659,13 +1659,13 @@ class C_PONG final :
   enum : int {
     kTimestampFieldNumber = 1,
   };
-  // int64 timestamp = 1;
+  // uint64 timestamp = 1;
   void clear_timestamp();
-  int64_t timestamp() const;
-  void set_timestamp(int64_t value);
+  uint64_t timestamp() const;
+  void set_timestamp(uint64_t value);
   private:
-  int64_t _internal_timestamp() const;
-  void _internal_set_timestamp(int64_t value);
+  uint64_t _internal_timestamp() const;
+  void _internal_set_timestamp(uint64_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.C_PONG)
@@ -1676,7 +1676,7 @@ class C_PONG final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    int64_t timestamp_;
+    uint64_t timestamp_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -1807,13 +1807,13 @@ class S_PING final :
   enum : int {
     kTimestampFieldNumber = 1,
   };
-  // int64 timestamp = 1;
+  // uint64 timestamp = 1;
   void clear_timestamp();
-  int64_t timestamp() const;
-  void set_timestamp(int64_t value);
+  uint64_t timestamp() const;
+  void set_timestamp(uint64_t value);
   private:
-  int64_t _internal_timestamp() const;
-  void _internal_set_timestamp(int64_t value);
+  uint64_t _internal_timestamp() const;
+  void _internal_set_timestamp(uint64_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.S_PING)
@@ -1824,7 +1824,7 @@ class S_PING final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    int64_t timestamp_;
+    uint64_t timestamp_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -2591,22 +2591,22 @@ inline void S_DESPAWN::set_player_id(uint64_t value) {
 
 // C_PONG
 
-// int64 timestamp = 1;
+// uint64 timestamp = 1;
 inline void C_PONG::clear_timestamp() {
-  _impl_.timestamp_ = int64_t{0};
+  _impl_.timestamp_ = uint64_t{0u};
 }
-inline int64_t C_PONG::_internal_timestamp() const {
+inline uint64_t C_PONG::_internal_timestamp() const {
   return _impl_.timestamp_;
 }
-inline int64_t C_PONG::timestamp() const {
+inline uint64_t C_PONG::timestamp() const {
   // @@protoc_insertion_point(field_get:Protocol.C_PONG.timestamp)
   return _internal_timestamp();
 }
-inline void C_PONG::_internal_set_timestamp(int64_t value) {
+inline void C_PONG::_internal_set_timestamp(uint64_t value) {
   
   _impl_.timestamp_ = value;
 }
-inline void C_PONG::set_timestamp(int64_t value) {
+inline void C_PONG::set_timestamp(uint64_t value) {
   _internal_set_timestamp(value);
   // @@protoc_insertion_point(field_set:Protocol.C_PONG.timestamp)
 }
@@ -2615,22 +2615,22 @@ inline void C_PONG::set_timestamp(int64_t value) {
 
 // S_PING
 
-// int64 timestamp = 1;
+// uint64 timestamp = 1;
 inline void S_PING::clear_timestamp() {
-  _impl_.timestamp_ = int64_t{0};
+  _impl_.timestamp_ = uint64_t{0u};
 }
-inline int64_t S_PING::_internal_timestamp() const {
+inline uint64_t S_PING::_internal_timestamp() const {
   return _impl_.timestamp_;
 }
-inline int64_t S_PING::timestamp() const {
+inline uint64_t S_PING::timestamp() const {
   // @@protoc_insertion_point(field_get:Protocol.S_PING.timestamp)
   return _internal_timestamp();
 }
-inline void S_PING::_internal_set_timestamp(int64_t value) {
+inline void S_PING::_internal_set_timestamp(uint64_t value) {
   
   _impl_.timestamp_ = value;
 }
-inline void S_PING::set_timestamp(int64_t value) {
+inline void S_PING::set_timestamp(uint64_t value) {
   _internal_set_timestamp(value);
   // @@protoc_insertion_point(field_set:Protocol.S_PING.timestamp)
 }

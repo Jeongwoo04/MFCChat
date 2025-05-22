@@ -20,8 +20,8 @@ void GameSessionManager::Remove(GameSessionRef session)
 GameSessionRef GameSessionManager::Find(uint64 sessionId)
 {
 	WRITE_LOCK;
-	auto it = _sessions.find(sessionId);
-	return it->second;
+	GameSessionRef session = _sessions[sessionId];
+	return session;
 }
 
 // Ã¤ÆÃ ÇÁ·Î±×·¥¿¡¼­ ÀüÃ¼ ¸Þ½ÃÁö
@@ -33,32 +33,3 @@ void GameSessionManager::Broadcast(SendBufferRef sendBuffer) // for µ¹¸é¼­ µ¿ÀÏÇ
 		session.second->Send(sendBuffer); // -> loop Å»¶§ _sessions¸¦ °Çµå¸®´ÂÁö Á¶½É !
 	}
 }
-
-void GameSessionManager::Kick(uint64 sessionId)
-{
-	WRITE_LOCK;
-	auto it = _sessions.find(sessionId);
-	if (it != _sessions.end())
-	{
-		it->second->Disconnect(L"Client Dead");
-		_sessions.erase(it);
-	}
-}
-
-//void GameSessionManager::CheckClientAlive(const Set<GameSessionRef>& sessions)
-//{
-//    const uint64_t timeoutMs = 15000; // 15ÃÊ ÀÌ»ó ÀÀ´ä ¾øÀ¸¸é ²÷±è Ã³¸®
-//    uint64_t now = GetTickCount64();
-//
-//    for (auto& session : sessions)
-//    {
-//        if (!session->IsTimeOut(now))
-//        {
-//            // ²÷±è °¨Áö: ¼¼¼Ç °­Á¦ Á¾·á Ã³¸®
-//            session->Disconnect(L"TimeOut");
-//
-//            // ·Î±× ³²±â±â
-//            std::cout << "Session disconnected due to timeout. PlayerId: " << session->_currentPlayer->playerId << std::endl;
-//        }
-//    }
-//}
