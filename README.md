@@ -46,6 +46,13 @@ Server에서 Ping 보내는 WorkerThread 하나 추가. 확장성 고려. RoomId
 Session 관리 : 기존 Set<GameSessionRef> 에서 unordered_map<sessionId, GameSessionRef> 로 변경 -> SessionId로 관리할 수 있게.<br/>
 Enter/Leave 패킷으로 처리 -> Enter/Leave 에서 본인에게 Send + Spawn/Despawn 으로 타인에게 Broadcast 로 나눠서 보내기.<br/>
 
+PING / PONG 처리 중. GameSession 내에서 OnDisconnect 부분에 Session 정리와 Room::Leave를 두어 IocpEvent로 Dispatch가 깨어나 호출하게 될때 처리.<br/>
+하지만 Server에서 Client의 연결 끊김을 감지하고 Kick해야하는 상황에서 문제 발생. Disconnect 호출해도 Dispatch가 동작이 안될수도.<br/>
+-> Room 안에서 처리? _players 반복문 도중 erase 되는 문제 발견 -> 삭제할 컨테이너 요소 따로 담아두고 -> 반복문 종료시 Leave 동기함수로 바로 호출<br/>
+-> 이러면 GameSession은 어디서 지워줘야하나..<br/><br/>
+
+DB Message Insert에서 messageId를 사용. DBSaveMessage 내에서 Execute 실패시. retry 간단 변수 추가. DelayPush, Priority DBJobQueue 등 신기한거 많았음.<br/>
+
 <br/><br/><br/><br/>
 TODO : DB Worker, DBJob 분리. 버그 수정.
 TODO : XML Parser에 OUTPUT 파싱 추가. SELECT 와 OUTPUT + SET 조합 jinja tool 자동 생성 코드 템플릿 추가. Binding 함수 세분화.<br/>
