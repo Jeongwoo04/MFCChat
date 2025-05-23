@@ -54,11 +54,35 @@ public:
 		return (len > 0);
 	}
 
-	template <size_t N>
-	static void CopyWCHARToArray(WCHAR(&dest)[N], const WCHAR* src)
+	static string WStringToUTF8(const std::wstring& wstr)
 	{
-		// 최대 크기를 초과 X
-		wcsncpy_s(dest, src, N - 1);
-		dest[N - 1] = L'\0';
-	};
+		if (wstr.empty())
+			return std::string();
+
+		// 변환할 때 필요한 버퍼 크기 구하기
+		int sizeNeeded = WideCharToMultiByte(
+			CP_UTF8,            // UTF-8 코드 페이지
+			0,                  // 변환 옵션
+			wstr.data(),        // 입력 UTF-16 문자열
+			(int)wstr.size(),   // 입력 문자열 길이
+			nullptr, 0,         // 출력 버퍼 없음, 크기만 구함
+			nullptr, nullptr);
+
+		if (sizeNeeded == 0)
+			return std::string();  // 실패 처리
+
+		std::string result(sizeNeeded, 0);
+
+		WideCharToMultiByte(
+			CP_UTF8,
+			0,
+			wstr.data(),
+			(int)wstr.size(),
+			result.data(),
+			sizeNeeded,
+			nullptr,
+			nullptr);
+
+		return result;
+	}
 };

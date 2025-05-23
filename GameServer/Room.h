@@ -12,13 +12,14 @@ public:
 	void Enter(GameSessionRef gameSession);
 	void Leave(PlayerRef player);
 	void Broadcast(SendBufferRef sendBuffer);
-	void BroadcastOthers(GameSessionRef gameSession, SendBufferRef sendBuffer);
+	void BroadcastOthers(PlayerRef player, SendBufferRef sendBuffer);
 	void BroadcastPing();
 
 	void SendLoginFail(GameSessionRef gameSession, Protocol::Cause cause, string msg);
 
 	void DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, string name);
 	void DBSaveMessage(DBConnection* dbConn, GameSessionRef gameSession, wstring msg, int64 serial, int32 retryCount);
+	void DBLoadRecentMessages(DBConnection* dbConn, GameSessionRef session, int lastMessageId);
 
 	void CheckPingTimeout();
 

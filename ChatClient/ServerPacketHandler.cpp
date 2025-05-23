@@ -38,7 +38,7 @@ bool Handle_S_LOGIN_FAIL(PacketSessionRef& session, Protocol::S_LOGIN_FAIL& pkt)
 	}
 
 	message += pkt.message();
-	const wstring& wMessage = Convert::UTF8ToWStringDynamic(message);
+	wstring wMessage = Convert::UTF8ToWStringDynamic(message);
 
 	serverSession->_dig->AddEventString(wMessage.c_str());
 
@@ -66,8 +66,8 @@ bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
 {
 	ServerSessionRef serverSession = static_pointer_cast<ServerSession>(session);
 
-	const string& message = pkt.message();
-	const wstring& wMessage = Convert::UTF8ToWStringDynamic(message);
+	string message = pkt.message();
+	wstring wMessage = Convert::UTF8ToWStringDynamic(message);
 
 	serverSession->_dig->AddEventString(wMessage.c_str());
 
@@ -85,10 +85,10 @@ bool Handle_S_LEAVE(PacketSessionRef& session, Protocol::S_LEAVE& pkt)
 
 	// Lobby가 없어 강제 종료됨. 추후 Unity 클라를 사용한 프로그램에서 구현.
 	
-	const string& message = u8"채팅방을 나갔습니다.";
-	const wstring& wMessage = Convert::UTF8ToWStringDynamic(message);
+	//string message = u8"채팅방을 나갔습니다.";
+	//wstring wMessage = Convert::UTF8ToWStringDynamic(message);
 
-	serverSession->_dig->AddEventString(wMessage.c_str());
+	//serverSession->_dig->AddEventString(wMessage.c_str());
 	
 	serverSession->_otherPlayers.clear();
 
@@ -116,8 +116,8 @@ bool Handle_S_DESPAWN(PacketSessionRef& session, Protocol::S_DESPAWN& pkt)
 	auto it = players.find(pkt.player_id());
 	if (it != players.end())
 	{
-		const string& message = u8"[" + it->second.name + u8"] 님이 채팅방을 나갔습니다.";
-		const wstring& wMessage = Convert::UTF8ToWStringDynamic(message);
+		string message = u8"[" + it->second.name + u8"] 님이 채팅방을 나갔습니다.";
+		wstring wMessage = Convert::UTF8ToWStringDynamic(message);
 
 		serverSession->_dig->AddEventString(wMessage.c_str());
 		players.erase(it);

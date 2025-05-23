@@ -44,7 +44,8 @@ void Room::Enter(GameSessionRef gameSession)
 		{
 			if (id == player->playerId)
 				continue;
-			p->ownerSession->Send(sendBuffer);
+			if (auto session = p->ownerSession.lock())
+				session->Send(sendBuffer);
 		}
 	}
 
@@ -74,7 +75,8 @@ void Room::Leave(PlayerRef player)
 		pkt.set_player_id(player->playerId);
 		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(pkt);
 
-		player->ownerSession->Send(sendBuffer);
+		if (auto session = player->ownerSession.lock())
+			session->Send(sendBuffer);
 	}
 	
 	// 타인에게 DESPAWN 패킷 전송
@@ -83,31 +85,32 @@ void Room::Leave(PlayerRef player)
 		despawnPkt.set_player_id(player->playerId);
 		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(despawnPkt);
 
-		BroadcastOthers(player->ownerSession, sendBuffer);
+		BroadcastOthers(player, sendBuffer);
 	}
 
 	_players.erase(player->playerId);
+
+	if (auto session = player->ownerSession.lock())
+		session->Disconnect(L"Leave");
 }
 
 void Room::Broadcast(SendBufferRef sendBuffer)
 {
-	for (auto& [id, player] : _players)
+	for (auto& player : _players)
 	{
-		auto session = player->ownerSession;
-		if (session && session->IsConnected())
+		if (auto session = player.second->ownerSession.lock())
 			session->Send(sendBuffer);
 	}
 }
 
-void Room::BroadcastOthers(GameSessionRef gameSession, SendBufferRef sendBuffer)
+void Room::BroadcastOthers(PlayerRef player, SendBufferRef sendBuffer)
 {
-	for (auto& [id, player] : _players)
+	for (auto& [id, p] : _players)
 	{
-		if (player->playerId == gameSession->_currentPlayer->playerId)
+		if (p->playerId == player->playerId)
 			continue;
 
-		auto session = player->ownerSession;
-		if (session && session->IsConnected())
+		if (auto session = p->ownerSession.lock())
 			session->Send(sendBuffer);
 	}
 }
@@ -200,6 +203,41 @@ void Room::SendLoginFail(GameSessionRef gameSession, Protocol::Cause cause, stri
 	gameSession->Send(sendBuffer);
 }
 
+/* Client 재 연결시 마지막 수신 messageId로부터 메시지 로드.
+void Room::DBLoadRecentMessages(DBConnection* dbConn, GameSessionRef session, int lastMessageId)
+{
+	SP::GetRecentChatMessages getMessage(*dbConn);
+	getMessage.In_LastMessageId(lastMessageId);
+
+	if (!getMessage.Execute())
+	{
+		return;
+	}
+
+	while (getMessage.Fetch())
+	{
+		int32 messageId;
+		getMessage.Out_Message_id(messageId);
+		int32 playerId;
+		getMessage.Out_Player_id(playerId);
+
+		WCHAR messageBuffer[200] = {};
+		getMessage.Out_Message(messageBuffer); // 또는 string -> wstring 변환
+		TIMESTAMP_STRUCT timestamp;
+		getMessage.Out_Timestamp(timestamp);
+
+		// 클라이언트에게 전송할 패킷 생성
+		Protocol::S_CHAT chatPkt;
+		chatPkt.set_message_id(messageId);
+		chatPkt.set_player_id(playerId);
+		chatPkt.set_message(Convert::WStringToUTF8(messageBuffer));  // 변환 함수 필요
+
+		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(chatPkt);
+		session->Send(sendBuffer);
+	}
+}
+*/
+
 void Room::CheckPingTimeout()
 {
 	if (_players.empty())
@@ -211,7 +249,7 @@ void Room::CheckPingTimeout()
 	// 순회 도중 Leave -> _players.erase 위험
 	for (auto& [id, player] : _players)
 	{
-		auto session = player->ownerSession;
+		auto session = player->ownerSession.lock();
 
 		// 20초 이상 응답 없으면 Disconnect
 		if ((now - session->_lastPongTime) >= 20000)
@@ -224,7 +262,8 @@ void Room::CheckPingTimeout()
 	// 반복문이 끝난 뒤 안전하게 삭제
 	for (PlayerRef p : timedOutPlayers)
 	{
-		Leave(p);
+		auto session = p->ownerSession.lock();
+		session->Disconnect(L"Kick");
 	}
 }
 

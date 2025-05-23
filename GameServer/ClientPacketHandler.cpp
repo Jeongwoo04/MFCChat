@@ -66,7 +66,7 @@ bool Handle_C_LEAVE(PacketSessionRef& session, Protocol::C_LEAVE& pkt)
 {
 	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
 
-	gameSession->Disconnect(L"Client request leave");
+	GRoom->DoAsync(&Room::Leave, gameSession->_currentPlayer);
 	return true;
 }
 
@@ -76,6 +76,7 @@ bool Handle_C_PONG(PacketSessionRef& session, Protocol::C_PONG& pkt)
 
 	gameSession->_lastPongTime = ::GetTickCount64();
 
-	wcout << "PONG from Session: " << gameSession->GetSessionId() << endl;
+	wcout << ">>> Received C_PONG from " << gameSession->GetSessionId()
+		<< " | timestamp: " << pkt.timestamp() << endl;
 	return true;
 }
