@@ -241,7 +241,7 @@ void GameSession::OnDisconnected()
   }
   ```
 <br/><br/><br/><br/>
-TODO : DB Worker, DBJob 분리. 버그 수정.
-TODO : XML Parser에 OUTPUT 파싱 추가. SELECT 와 OUTPUT + SET 조합 jinja tool 자동 생성 코드 템플릿 추가. Binding 함수 세분화.<br/>
-TODO : Client 강제 종료시 Server Crash. -> DBConnection 을 꺼내온 상태로 Worker가 돌아가다 삭제된 iterator를 참조함.<br/>
-TODO : Client <-> Server Ping / Pong 추가
+완 : DB Worker, DBJob 분리. 버그 수정.
+완 : XML Parser에 OUTPUT 파싱 추가. SELECT 와 OUTPUT + SET 조합 jinja tool 자동 생성 코드 템플릿 추가. Binding 함수 세분화.<br/>
+완 : Client 강제 종료시 Server Crash. -> DBConnection 을 꺼내온 상태로 Worker가 돌아가다 삭제된 iterator를 참조함.<br/>
+완 : Client <-> Server Ping / Pong 추가
