@@ -1,106 +1,93 @@
 # Server<br/><br/>
 
 ### 1. DB 저장 Blocking → 비동기 처리 전환
-- 기존: 메시지 저장 시 Main Thread에서 직접 Blocking DB 호출
-- 변경: `GDBJobQueue` 등록 후, Room과 분리된 DB Worker Thread에서 비동기로 처리
-- 효과: 메인 로직과 DB I/O 분리로 병렬 처리 및 지연 최소화
+- **기존**: 메시지 저장 시 Main Thread에서 Blocking DB 호출
+- **변경**: `GDBJobQueue` 등록 → Room과 분리된 DB Worker Thread에서 비동기 처리
+- **효과**: 게임 로직과 DB I/O 분리로 병목 해소, 병렬 처리 가능
 
 ---
 
-### 2. Protobuf UTF-8 한글 깨짐 현상 해결
-- 출력 설정 추가:
-  ```cpp
-  _setmode(_fileno(stdout), _O_U16TEXT);
-  SetConsoleOutputCP(CP_UTF8);
-  ```
-효과: 콘솔에서 UTF-8 기반 한글 정상 출력 가능
+### 2. Job / DBJob 구조 분리
+- `Job` / `DBJob` 실행 스레드 분리
+- `DoAsync()` / `DoDBAsync()` 함수 구분
+- DBWorker에서는 Connection Pool `Pop/Push`를 **한 번만 호출**
+- `JobCount` / `DBJobCount`를 별도로 관리하여 **기아(starvation)** 방지
 
-3. Job / DBJob 구조 분리
-Job / DBJob 실행 스레드 분리
+---
 
-DoAsync() / DoDBAsync() 함수 구분
+### 3. 클라이언트 링커 오류 해결
+- ODBC 관련 링커 오류 발생 → `odbc32.lib` 추가로 해결
 
-DBWorker 내에서는 Connection Pool Pop/Push 최소화
+---
 
-각각 JobCount/DBJobCount 분리 관리 → 기아(starvation) 방지
+### 4. DBConnection Pop 시 nullptr 보호
+- Connection이 `nullptr`일 경우 **2회 재시도 (spin)** 로직 적용
+- 최종 실패 시 **로그 기록 또는 예외 처리**로 대응
 
-4. 클라이언트 링커 오류 해결
-ODBC 링커 오류: odbc32.lib 추가하여 해결
+---
 
-5. DBConnection Pop 시 nullptr 보호
-2회 재시도 로직 추가 (spin 2회)
+### 5. 패킷 구조 및 플레이어 흐름 정비
+- `GameSession`, `Player`, `Room` 구조 개선
+- 흐름 정리:
+Client → Connect → Server → Login → DBConnect
+→ (Success/Fail) → Enter → Broadcast
 
-실패 시 로그 또는 예외 처리
+---
 
-6. 패킷 구조 및 플레이어 흐름 정비
-GameSession, Player, Room 구조 재정비
+### 6. DBJobQueue 실행 안 되는 문제 분석 및 해결
+- `DoDBAsync()` 등록 후 실행되지 않던 이슈:
+- `LCurrentJobQueue`와 `DBJobQueue`의 **구조 차이**
+- 첫 접근 스레드에서 `Execute()` 호출 누락 가능성
+- 내부 예외 처리 부족 → 예외 발생 시 중단
+- **대응**:
+- `JobQueue` 실행 흐름 전체 점검
+- `DBSave()` 내부 예외 처리 및 `GlobalQueue` 로직 디버깅
 
-Client → Connect → Server → Login → DBConnect → Enter → Broadcast 흐름 확립
+---
 
-7. DBJobQueue 실행 안되는 문제 분석
-DoDBAsync 등록 이후 실행되지 않던 이슈:
+### 7. DB 메시지 저장 안정성 강화
+- `spInsertChatMessage` 최적화
+- XML 파서에서 `<out="true">` 파라미터 반영 완료
+- 메시지에 **serial 번호** 부여 → 실패 시 재전송 보장
+- `PlayerId + lastMessageId` 조합으로 **메시지 순서 보장**
 
-LCurrentJobQueue와 DBJobQueue 간 구분
+---
 
-첫 접근 쓰레드에서 처리 누락 가능성
+### 8. SQL Server OUTPUT + SELECT 혼합 처리
+- `SELECT` → `Fetch()`로 결과 소비
+- `OUTPUT` → `SQLMoreResults()` 이후 OUT 파라미터 접근
+- `OUTPUT`만 있는 경우에도 **`SQLMoreResults()` 호출 필요**
+- ODBC는 결과셋을 끝까지 넘긴 후 OUT 바인딩을 반환
 
-Execute() 내부 예외 처리 강화
+---
 
-해결:
+### 9. Ping / Pong 구조 개선
+- **변경 전**: Client → Ping / Server → Pong
+- **변경 후**: Server → Ping / Client → Pong
+- `RoomManager`에서 각 Room에 Ping Broadcast 가능하도록 확장성 고려
+- `Session` 관리 방식 개선:
+- `Set<GameSessionRef>` → `unordered_map<sessionId, GameSessionRef>` 로 변경
+- 입장/퇴장 처리 방식:
+- **본인**: `Send()`
+- **타인**: `Broadcast(Spawn/Despawn)`
 
-JobQueue 실행 흐름 전수 검사
+---
 
-DBSave() 내 예외 처리 및 GlobalQueue 추적 강화
+### 10. OnDisconnected 처리 개선
+- `GameSession::OnDisconnected()`에서:
+- `ownerSession.reset()`
+- `Room::Leave()` 등록
+- Ping Timeout 또는 강제 Kick 시 문제 발생:
+- `_players` 반복 중 `erase()` 문제 → 제거 대상 따로 저장
+- 반복 종료 후 Leave 처리 → **반복자 무효화 방지**
 
-8. DB 메시지 저장 최적화 및 안정성 강화
-spInsertChatMessage 저장 절차 개선
+---
 
-xml 파서에서 <out="true"> 파라미터 적용 처리 완료
-
-메시지에 serial 부여 → 실패 시 재전송 가능
-
-PlayerId + lastMessageId 조합으로 메시지 순서 보장
-
-9. SQL Server OUTPUT + SELECT 혼합 처리
-OUTPUT + SELECT 조합 시 Fetch → SQLMoreResults 호출 필요
-
-SELECT → Fetch()
-OUTPUT → SQLMoreResults() 이후 OUT 파라미터 접근 가능
-
-10. Ping / Pong 구조 개선
-기존: Client Ping → Server Pong
-
-변경: Server Ping → Client Pong 응답 구조로 재설계
-
-RoomManager 기반 Ping Broadcast 확장 고려
-
-Session 관리: unordered_map<sessionId, GameSessionRef> 구조로 변경
-
-입장/퇴장 시:
-
-본인: Send
-
-타인: Broadcast(Spawn/Despawn)
-
-11. OnDisconnected 처리 개선
-GameSession::OnDisconnected 시:
-
-ownerSession.reset()
-
-Room::Leave() 호출 등록
-
-Ping Timeout 등으로 인한 Kick 시:
-
-_players 반복 중 erase() 문제 → 제거 대상 별도 저장 후 처리
-
-Room 내부에서 Leave() 호출로 마무리
-
-12. DB 실패 시 Retry 흐름 설계
-DBSaveMessage 내 Execute() 실패 시:
-
-retry 변수 추가
-
-추후 DelayPush, Priority DBJobQueue 적용 가능성 탐색
+### 11. DB 실패 시 Retry 흐름 설계
+- `DBSaveMessage` 내 `Execute()` 실패 시:
+- `retry` 변수로 재시도 제어
+- 향후 기능 확장 고려:
+- `DelayPush`, `Priority DBJobQueue` 등 우선순위 기반 재등록 구조 검토
 
 ## 1. 최근 채팅 메시지 조회 및 역순 출력 문제 해결
 
