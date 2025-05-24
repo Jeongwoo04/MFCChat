@@ -230,6 +230,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="ServerPacketHandler.h" />
     <ClInclude Include="ServerSession.h" />
+    <ClInclude Include="ServerSessionManager.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
@@ -261,6 +262,7 @@
     </ClCompile>
     <ClCompile Include="ServerPacketHandler.cpp" />
     <ClCompile Include="ServerSession.cpp" />
+    <ClCompile Include="ServerSessionManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Common\protobuf\bin\Enum.proto" />

@@ -11,6 +11,7 @@
 #include "XmlParser.h"
 #include "DBSynchronizer.h"
 #include "CoreGlobal.h"
+#include "ServerSessionManager.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -43,6 +44,7 @@ CChatClientApp theApp;
 BOOL CChatClientApp::InitInstance()
 {
 	CWinApp::InitInstance();
+	GServerSessionManager = new ServerSessionManager();
 
 
 	// 대화 상자에 셸 트리 뷰 또는
@@ -81,6 +83,18 @@ BOOL CChatClientApp::InitInstance()
 	if (pShellManager != nullptr)
 	{
 		delete pShellManager;
+	}
+
+	if (GThreadManager)
+	{
+		delete GThreadManager;
+		GThreadManager = nullptr;
+	}
+
+	if (GServerSessionManager)
+	{
+		delete GServerSessionManager;
+		GServerSessionManager = nullptr;
 	}
 
 #if !defined(_AFXDLL) && !defined(_AFX_NO_MFC_CONTROLS_IN_DIALOGS)

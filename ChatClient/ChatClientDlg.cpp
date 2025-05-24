@@ -13,6 +13,7 @@
 #define new DEBUG_NEW
 #endif
 #include <Convert.h>
+#include "SocketUtils.h"
 
 // 응용 프로그램 정보에 사용되는 CAboutDlg 대화 상자입니다.
 
@@ -82,8 +83,15 @@ BOOL CChatClientDlg::PreTranslateMessage(MSG* pMsg)
 
 void CChatClientDlg::AddEventString(const WCHAR* ap_string)
 {
-	int index = chatList.InsertString(-1, ap_string);
-	chatList.SetCurSel(index);
+	if (AfxGetApp()->m_pMainWnd->GetSafeHwnd() != nullptr)
+	{
+		int index = chatList.InsertString(-1, ap_string);
+		if (index != LB_ERR && index != LB_ERRSPACE)
+		{
+			if (chatList.GetSafeHwnd())
+				chatList.SetCurSel(index);
+		}
+	}
 }
 
 BEGIN_MESSAGE_MAP(CChatClientDlg, CDialogEx)
@@ -91,6 +99,7 @@ BEGIN_MESSAGE_MAP(CChatClientDlg, CDialogEx)
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(IDC_SEND_BTN, &CChatClientDlg::OnBnClickedSendBtn)
 	ON_BN_CLICKED(IDC_CONNECT_BTN, &CChatClientDlg::OnBnClickedConnectBtn)
+	ON_BN_CLICKED(IDOK, &CChatClientDlg::OnBnClickedOk)
 END_MESSAGE_MAP()
 
 
@@ -99,6 +108,7 @@ END_MESSAGE_MAP()
 BOOL CChatClientDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
+	GetDlgItem(IDOK)->SetWindowTextW(L"나가기");
 
 	// 이 대화 상자의 아이콘을 설정합니다.  응용 프로그램의 주 창이 대화 상자가 아닐 경우에는
 	//  프레임워크가 이 작업을 자동으로 수행합니다.
@@ -187,6 +197,8 @@ void CChatClientDlg::OnBnClickedSendBtn()
 
 	serverSession->SetName(csToUTF8(userName));
 
+	if (chtMsg == L"")
+		return;
 	Protocol::C_CHAT chatPkt;
 	chatPkt.set_message(csToUTF8(chtMsg));
 	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(chatPkt);
@@ -217,11 +229,7 @@ void CChatClientDlg::OnBnClickedConnectBtn()
 		if (portInt != SERVER_PORT)
 			SetDlgItemText(IDC_SERVER_PORT, _T(""));
 		chatList.ResetContent();
-		if (_isConnected == true)
-		{
-			_serverSession->Disconnect(L"NetAddress Mismatch");
-			_isConnected = false;
-		}
+		
 		return;
 	}
 
@@ -259,5 +267,14 @@ void CChatClientDlg::OnCancel()
 	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(pkt);
 	_serverSession->Send(sendBuffer);
 
+	this_thread::sleep_for(10ms);
 	CDialogEx::OnCancel();
+}
+
+
+void CChatClientDlg::OnBnClickedOk()
+{
+	Protocol::C_LEAVE pkt;
+	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(pkt);
+	_serverSession->Send(sendBuffer);
 }

@@ -31,7 +31,23 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 
 	string name = pkt.name();
 
-	GRoom->DoDBAsync(&Room::DBProcessLogin, gameSession, name);
+	int64 serial = 0;
+	GRoom->DoDBAsync(&Room::DBProcessLogin, gameSession, name, serial);
+
+	return true;
+}
+
+bool Handle_C_RECONNECT(PacketSessionRef& session, Protocol::C_RECONNECT& pkt)
+{
+	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
+
+	// TODO : Validation check
+	if (gameSession->_currentPlayer != nullptr)
+		return false;
+
+	string name = pkt.name();
+	int64 serial = pkt.last_serial();
+	GRoom->DoDBAsync(&Room::DBProcessLogin, gameSession, name, serial);
 
 	return true;
 }
@@ -42,18 +58,19 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 	PlayerRef player = gameSession->_currentPlayer;
 
 	wstring wNameCopy = Convert::UTF8ToWStringDynamic(player->name);
-	wstring wMessageCopy = Convert::UTF8ToWStringDynamic(pkt.message());
 
 	int32 retryCount = 0;
-	GRoom->DoDBAsync(&Room::DBSaveMessage, gameSession, wMessageCopy, GRoom->_currentChatSerial++, retryCount);
-	wcout << L"Send To Room) ID[" << player->playerId << "] " << "Name[" << wNameCopy << L"] Msg[" << wMessageCopy << L"]" << endl;
+	int64 serial = GRoom->_currentChatSerial++;
+	const string& sendMsg = u8"[" + player->name + u8"]:" + pkt.message();
+	wstring wMessage = Convert::UTF8ToWStringDynamic(sendMsg);
+	GRoom->DoDBAsync(&Room::DBSaveMessage, gameSession, wMessage, serial, retryCount);
+	wcout << L"Send To Room) ID[" << player->playerId << "] " << "Name[" << wNameCopy << L"] Msg[" << wMessage << L"]" << endl;
 
 	Protocol::S_CHAT chatPkt;
 
-	chatPkt.set_message_id(GRoom->_currentChatSerial);
+	chatPkt.set_serial(serial);
 	chatPkt.set_player_id(player->playerId);
 	chatPkt.set_name(player->name);
-	const string& sendMsg = u8"[" + player->name + u8"]:" + pkt.message();
 	chatPkt.set_message(sendMsg);
 	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(chatPkt);
 
@@ -66,7 +83,8 @@ bool Handle_C_LEAVE(PacketSessionRef& session, Protocol::C_LEAVE& pkt)
 {
 	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
 
-	GRoom->DoAsync(&Room::Leave, gameSession->_currentPlayer);
+	gameSession->Disconnect(L"Kick");
+	//GRoom->DoAsync(&Room::Leave, gameSession);
 	return true;
 }
 

@@ -5,7 +5,10 @@
 class GameSession : public PacketSession // sealed로 인해 OnRecv 사용불가
 {
 public:
-	GameSession() { _sessionId = GSessionIdGenerator.fetch_add(1);  _lastPongTime = ::GetTickCount64(); }
+	GameSession(): _sessionId(GSessionIdGenerator.fetch_add(1))
+	{
+
+	}
 	~GameSession()
 	{
 		wcout << "~GameSession : SessionId = " << _sessionId << endl;

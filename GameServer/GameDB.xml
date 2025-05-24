@@ -73,26 +73,30 @@
 	<Procedure name="spInsertChatMessage">
 		<Param name="@player_id" type="int" />
 		<Param name="@message" type="nvarchar(200)" />
-		<Param name="@timestamp" type="datetime" />
 		<Param name="@serial" type="bigint" />
 		<Param name="@message_id" type="int" out="true" />
 		<Body>
 			<![CDATA[
+			SET NOCOUNT ON;
+
 			INSERT INTO [dbo].[ChatMessage] ([player_id], [message], [timestamp], [serial])
-			VALUES (@player_id, @message, @timestamp, @serial);
-			
+			VALUES (@player_id, @message, GETDATE(), @serial);
+
 			SET @message_id = SCOPE_IDENTITY();
-			]]>
+		]]>
 		</Body>
 	</Procedure>
 	<Procedure name="spGetRecentChatMessages">
-		<Param name="@lastMessageId" type="int" />
+		<Param name="@lastSerial" type="bigint" />
 		<Body>
 			<![CDATA[
-			SELECT message_id, player_id, message, timestamp
-			FROM [dbo].[ChatMessage]
-			WHERE message_id > @lastMessageId
-			ORDER BY message_id ASC;
+			SELECT * FROM (
+				SELECT TOP 30 message_id, player_id, message, timestamp, serial
+				FROM ChatMessage
+				WHERE serial > @lastSerial
+				ORDER BY serial DESC
+			) AS Recent30
+			ORDER BY serial ASC
 			]]>
 		</Body>
 	</Procedure>

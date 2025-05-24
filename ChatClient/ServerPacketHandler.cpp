@@ -66,6 +66,8 @@ bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
 {
 	ServerSessionRef serverSession = static_pointer_cast<ServerSession>(session);
 
+	if (pkt.serial() > serverSession->_serial)
+		serverSession->setChatSerial(pkt.serial());
 	string message = pkt.message();
 	wstring wMessage = Convert::UTF8ToWStringDynamic(message);
 
@@ -77,20 +79,8 @@ bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
 bool Handle_S_LEAVE(PacketSessionRef& session, Protocol::S_LEAVE& pkt)
 {
 	ServerSessionRef serverSession = static_pointer_cast<ServerSession>(session);
-	
-	serverSession->_dig->_isConnected = false;
+
 	serverSession->Disconnect(L"Leave");
-	serverSession->_otherPlayers.clear();
-	serverSession->SetName("");
-
-	// Lobby가 없어 강제 종료됨. 추후 Unity 클라를 사용한 프로그램에서 구현.
-	
-	//string message = u8"채팅방을 나갔습니다.";
-	//wstring wMessage = Convert::UTF8ToWStringDynamic(message);
-
-	//serverSession->_dig->AddEventString(wMessage.c_str());
-	
-	serverSession->_otherPlayers.clear();
 
 	return true;
 }
@@ -113,15 +103,7 @@ bool Handle_S_DESPAWN(PacketSessionRef& session, Protocol::S_DESPAWN& pkt)
 	ServerSessionRef serverSession = static_pointer_cast<ServerSession>(session);
 	auto& players = serverSession->_otherPlayers;
 
-	auto it = players.find(pkt.player_id());
-	if (it != players.end())
-	{
-		string message = u8"[" + it->second.name + u8"] 님이 채팅방을 나갔습니다.";
-		wstring wMessage = Convert::UTF8ToWStringDynamic(message);
-
-		serverSession->_dig->AddEventString(wMessage.c_str());
-		players.erase(it);
-	}
+	players.erase(pkt.player_id());
 
 	return true;
 }
@@ -131,7 +113,8 @@ bool Handle_S_PING(PacketSessionRef& session, Protocol::S_PING& pkt)
 	ServerSessionRef serverSession = static_pointer_cast<ServerSession>(session);
 
 	Protocol::C_PONG pongPkt;
-	pongPkt.set_timestamp(pkt.timestamp()); // echo back
+	uint64 now = ::GetTickCount64();
+	pongPkt.set_timestamp(now); // echo back
 
 	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(pongPkt);
 	serverSession->Send(sendBuffer);

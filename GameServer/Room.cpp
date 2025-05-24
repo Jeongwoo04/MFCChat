@@ -7,10 +7,8 @@
 #include "ClientPacketHandler.h"
 #include <Convert.h>
 
-void Room::Enter(GameSessionRef gameSession)
+void Room::Enter(GameSessionRef gameSession, PlayerRef player)
 {
-	PlayerRef player = gameSession->_currentPlayer;
-	 
 	_players[player->playerId] = player;
 
 	Protocol::S_ENTER enterPkt;
@@ -48,6 +46,9 @@ void Room::Enter(GameSessionRef gameSession)
 				session->Send(sendBuffer);
 		}
 	}
+	auto it = _lastSentMessageIdPerUser.find(player->playerId);
+	if (it != _lastSentMessageIdPerUser.end())
+		this->DoDBAsync(&Room::DBLoadRecentMessages, gameSession, _lastSentMessageIdPerUser[player->playerId]);
 
 	// Room에 입장 S_CHAT 알림
 	{
@@ -62,12 +63,13 @@ void Room::Enter(GameSessionRef gameSession)
 		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(chatPkt);
 		wstring wMessage = Convert::UTF8ToWStringDynamic(message);
 		int32 retryCount = 0;
-		this->DoDBAsync(&Room::DBSaveMessage, gameSession, wMessage, _currentChatSerial++, retryCount);
-		DoAsync(&Room::Broadcast, sendBuffer);
+		int64 serial = _currentChatSerial++;
+		this->DoDBAsync(&Room::DBSaveMessage, gameSession, wMessage, serial, retryCount);
+		this->DoAsync(&Room::Broadcast, sendBuffer);
 	}
 }
 
-void Room::Leave(PlayerRef player)
+void Room::Leave(GameSessionRef gameSession, PlayerRef player)
 {
 	// 나에게 LEAVE 패킷 전송
 	{
@@ -75,8 +77,7 @@ void Room::Leave(PlayerRef player)
 		pkt.set_player_id(player->playerId);
 		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(pkt);
 
-		if (auto session = player->ownerSession.lock())
-			session->Send(sendBuffer);
+		gameSession->Send(sendBuffer);
 	}
 	
 	// 타인에게 DESPAWN 패킷 전송
@@ -88,18 +89,35 @@ void Room::Leave(PlayerRef player)
 		BroadcastOthers(player, sendBuffer);
 	}
 
+	std::string leaveMsg = u8"[" + player->name + u8"] 님이 채팅방을 나갔습니다.";
+
+	player->ownerSession.reset();
+
 	_players.erase(player->playerId);
 
-	if (auto session = player->ownerSession.lock())
-		session->Disconnect(L"Leave");
+	BroadcastSysMessage(leaveMsg);
 }
 
 void Room::Broadcast(SendBufferRef sendBuffer)
 {
-	for (auto& player : _players)
+	for (auto it = _players.begin(); it != _players.end(); )
 	{
-		if (auto session = player.second->ownerSession.lock())
-			session->Send(sendBuffer);
+		auto& player = it->second;
+		if (!player)
+		{
+			it = _players.erase(it);
+			continue;
+		}
+
+		auto session = player->ownerSession.lock();
+		if (!session)
+		{
+			it = _players.erase(it);
+			continue;
+		}
+
+		session->Send(sendBuffer);
+		++it;
 	}
 }
 
@@ -115,9 +133,19 @@ void Room::BroadcastOthers(PlayerRef player, SendBufferRef sendBuffer)
 	}
 }
 
+void Room::BroadcastSysMessage(const string& message)
+{
+	Protocol::S_CHAT sysMsgPkt;
+	sysMsgPkt.set_player_id(0);
+	sysMsgPkt.set_message(message);
+
+	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(sysMsgPkt);
+
+	Broadcast(sendBuffer);
+}
+
 void Room::BroadcastPing()
 {
-	using namespace std::chrono;
 	uint64 now = ::GetTickCount64();
 
 	Protocol::S_PING pingPkt;
@@ -129,7 +157,7 @@ void Room::BroadcastPing()
 	Broadcast(sendBuffer);
 }
 
-void Room::DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, string name)
+void Room::DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, string name, int64 lastSerial)
 {
 	WCHAR wName[50] = { };
 	if (name.length() <= 0 || !Convert::UTF8ToWCHARArray(wName, name))
@@ -191,7 +219,7 @@ void Room::DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, stri
 
 	gameSession->_currentPlayer = player;
 
-	DoAsync(&Room::Enter, gameSession);	
+	DoAsync(&Room::Enter, gameSession, player);	
 }
 
 void Room::SendLoginFail(GameSessionRef gameSession, Protocol::Cause cause, string msg)
@@ -203,40 +231,57 @@ void Room::SendLoginFail(GameSessionRef gameSession, Protocol::Cause cause, stri
 	gameSession->Send(sendBuffer);
 }
 
-/* Client 재 연결시 마지막 수신 messageId로부터 메시지 로드.
-void Room::DBLoadRecentMessages(DBConnection* dbConn, GameSessionRef session, int lastMessageId)
+// Client 재 연결시 마지막 수신 messageId로부터 메시지 로드.
+void Room::DBLoadRecentMessages(DBConnection* dbConn, GameSessionRef session, int lastSerial)
 {
 	SP::GetRecentChatMessages getMessage(*dbConn);
-	getMessage.In_LastMessageId(lastMessageId);
+	getMessage.In_LastSerial(lastSerial);
 
-	if (!getMessage.Execute())
+	int32 messageId = 0;
+	getMessage.Out_Message_id(messageId);
+
+	int32 playerId = 0;
+	getMessage.Out_Player_id(playerId);
+
+	WCHAR messageBuffer[200] = {};
+	getMessage.Out_Message(messageBuffer);
+
+	TIMESTAMP_STRUCT timestamp = {};
+	getMessage.Out_Timestamp(timestamp);
+
+	int64 serial = 0;
+	getMessage.Out_Serial(serial);
+
+	if (!getMessage.Execute() && dbConn->Fetch())
 	{
 		return;
 	}
 
+	int count = 0;
+	const int maxCount = 30;
+
 	while (getMessage.Fetch())
 	{
-		int32 messageId;
-		getMessage.Out_Message_id(messageId);
-		int32 playerId;
-		getMessage.Out_Player_id(playerId);
-
-		WCHAR messageBuffer[200] = {};
-		getMessage.Out_Message(messageBuffer); // 또는 string -> wstring 변환
-		TIMESTAMP_STRUCT timestamp;
-		getMessage.Out_Timestamp(timestamp);
+		if (count++ >= maxCount)
+			break;
 
 		// 클라이언트에게 전송할 패킷 생성
 		Protocol::S_CHAT chatPkt;
 		chatPkt.set_message_id(messageId);
 		chatPkt.set_player_id(playerId);
-		chatPkt.set_message(Convert::WStringToUTF8(messageBuffer));  // 변환 함수 필요
+		chatPkt.set_timestamp(Convert::GetCurrentEpochMilli());
+		chatPkt.set_serial(serial);
+
+		const string& sendMsg = Convert::WStringToUTF8(messageBuffer);
+		chatPkt.set_message(sendMsg);
+
+		wcout << "ID[" << playerId << "], NAME[" << _players[playerId] << "], SERIAL[" << serial << "]-" << messageBuffer << endl;
 
 		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(chatPkt);
 		session->Send(sendBuffer);
 	}
 }
-*/
+
 
 void Room::CheckPingTimeout()
 {
@@ -249,7 +294,12 @@ void Room::CheckPingTimeout()
 	// 순회 도중 Leave -> _players.erase 위험
 	for (auto& [id, player] : _players)
 	{
+		if (!player)
+			continue; // nullptr 보호
+
 		auto session = player->ownerSession.lock();
+		if (!session)
+			continue;
 
 		// 20초 이상 응답 없으면 Disconnect
 		if ((now - session->_lastPongTime) >= 20000)
@@ -273,7 +323,6 @@ void Room::DBSaveMessage(DBConnection* dbConn, GameSessionRef gameSession, wstri
 	SP::InsertChatMessage insert(*dbConn);
 	insert.In_Player_id(gameSession->_currentPlayer->playerId);
 	insert.In_Message(wMsgCopy.c_str(), static_cast<int32>(wMsgCopy.length()));
-	insert.In_Timestamp(Convert::GetCurrentTimestamp());
 	insert.In_Serial(serial);
 	int32 messageId = -1;
 	insert.Out_Message_id(messageId);
@@ -294,5 +343,9 @@ void Room::DBSaveMessage(DBConnection* dbConn, GameSessionRef gameSession, wstri
 	if (messageId <= 0)
 	{
 		// TODO : 
+	}
+	for (auto& [i, p] : _players)
+	{
+		_lastSentMessageIdPerUser[i] = serial;
 	}
 }

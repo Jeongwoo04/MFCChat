@@ -49,4 +49,5 @@ public:
 	ServerSessionRef	_serverSession;
 	virtual void OnOK();
 	virtual void OnCancel();
+	afx_msg void OnBnClickedOk();
 };

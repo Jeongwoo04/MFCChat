@@ -56,32 +56,17 @@ public:
 
 	static string WStringToUTF8(const std::wstring& wstr)
 	{
-		if (wstr.empty())
-			return std::string();
+		if (wstr.empty()) return {};
 
-		// 변환할 때 필요한 버퍼 크기 구하기
-		int sizeNeeded = WideCharToMultiByte(
-			CP_UTF8,            // UTF-8 코드 페이지
-			0,                  // 변환 옵션
-			wstr.data(),        // 입력 UTF-16 문자열
-			(int)wstr.size(),   // 입력 문자열 길이
-			nullptr, 0,         // 출력 버퍼 없음, 크기만 구함
-			nullptr, nullptr);
+		int len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
+		if (len <= 0) return {};
 
-		if (sizeNeeded == 0)
-			return std::string();  // 실패 처리
+		std::string result(len, 0); // 널 문자 포함 크기 확보
+		WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &result[0], len, nullptr, nullptr);
 
-		std::string result(sizeNeeded, 0);
-
-		WideCharToMultiByte(
-			CP_UTF8,
-			0,
-			wstr.data(),
-			(int)wstr.size(),
-			result.data(),
-			sizeNeeded,
-			nullptr,
-			nullptr);
+		// 널 문자 제거 (선택 사항)
+		if (!result.empty() && result.back() == '\0')
+			result.pop_back();
 
 		return result;
 	}

@@ -7,16 +7,17 @@ extern PacketHandlerFunc GPacketHandler[UINT16_MAX];
 enum : uint16
 {
 	PKT_C_LOGIN = 1000,
-	PKT_S_LOGIN_FAIL = 1001,
-	PKT_S_ENTER = 1002,
-	PKT_C_CHAT = 1003,
-	PKT_S_CHAT = 1004,
-	PKT_C_LEAVE = 1005,
-	PKT_S_LEAVE = 1006,
-	PKT_S_SPAWN = 1007,
-	PKT_S_DESPAWN = 1008,
-	PKT_C_PONG = 1009,
-	PKT_S_PING = 1010,
+	PKT_C_RECONNECT = 1001,
+	PKT_S_LOGIN_FAIL = 1002,
+	PKT_S_ENTER = 1003,
+	PKT_C_CHAT = 1004,
+	PKT_S_CHAT = 1005,
+	PKT_C_LEAVE = 1006,
+	PKT_S_LEAVE = 1007,
+	PKT_S_SPAWN = 1008,
+	PKT_S_DESPAWN = 1009,
+	PKT_C_PONG = 1010,
+	PKT_S_PING = 1011,
 };
 
 // Custom Handlers
@@ -51,6 +52,7 @@ public:
 		return GPacketHandler[header->id](session, buffer, len);
 	}
 	static SendBufferRef MakeSendBuffer(Protocol::C_LOGIN& pkt) { return MakeSendBuffer(pkt, PKT_C_LOGIN); }
+	static SendBufferRef MakeSendBuffer(Protocol::C_RECONNECT& pkt) { return MakeSendBuffer(pkt, PKT_C_RECONNECT); }
 	static SendBufferRef MakeSendBuffer(Protocol::C_CHAT& pkt) { return MakeSendBuffer(pkt, PKT_C_CHAT); }
 	static SendBufferRef MakeSendBuffer(Protocol::C_LEAVE& pkt) { return MakeSendBuffer(pkt, PKT_C_LEAVE); }
 	static SendBufferRef MakeSendBuffer(Protocol::C_PONG& pkt) { return MakeSendBuffer(pkt, PKT_C_PONG); }
