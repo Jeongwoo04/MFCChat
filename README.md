@@ -1,57 +1,106 @@
 # Server<br/><br/>
 
-기존 DB 저장 Blocking 과정<br/>
--> GDBJobQueue 등록 비동기 처리<br/>
--> Room / DB Worker Thread<br/><br/>
+### 1. DB 저장 Blocking → 비동기 처리 전환
+- 기존: 메시지 저장 시 Main Thread에서 직접 Blocking DB 호출
+- 변경: `GDBJobQueue` 등록 후, Room과 분리된 DB Worker Thread에서 비동기로 처리
+- 효과: 메인 로직과 DB I/O 분리로 병렬 처리 및 지연 최소화
 
-protobuf string UTF-8 한글 깨짐 현상 해결<br/>
--> _setmode(_fileno(stdout), _O_U16TEXT); SetConsoleOutputCP(CP_UTF8);<br/><br/>
+---
 
-Job / DBJob 분리<br/>
--> Job / DBJob 실행 Worker 분리<br/>
--> DoAsync / DoDBAsync 분리<br/>
--> DB Worker안에서 JobQueue를 비울때 DBConnectionPool Pop / Push 한번만 호출<br/>
--> 기존 DoAsync 작업 호출시 매번 꺼내서 사용.<br/><br/>
+### 2. Protobuf UTF-8 한글 깨짐 현상 해결
+- 출력 설정 추가:
+  ```cpp
+  _setmode(_fileno(stdout), _O_U16TEXT);
+  SetConsoleOutputCP(CP_UTF8);
+  ```
+효과: 콘솔에서 UTF-8 기반 한글 정상 출력 가능
 
-Client 링커 오류 해결 -> odbc32.lib 추가<br/><br/>
+3. Job / DBJob 구조 분리
+Job / DBJob 실행 스레드 분리
 
-DBConnection Pop -> nullptr 체크 (spin 2회)<br/>
+DoAsync() / DoDBAsync() 함수 구분
 
-패킷 설계 수정. GameSession / Player / Room 등 수정<br/>
+DBWorker 내에서는 Connection Pool Pop/Push 최소화
 
-Client->Conncet->Server->Login->DBConnect->Fail or Success->Enter->Broadcast 완료.<br/><br/>
+각각 JobCount/DBJobCount 분리 관리 → 기아(starvation) 방지
 
-DoDBAsync 등록 후 실행x -> 디버깅 결과 JobQueue::Push 및 각 Job들의 Execute 실행까지 확인.<br/>
--> LCurrentJobQueue 가 기존 JobQueue랑 달리 DBJobQueue에선 첫번째 접근 쓰레드가 처리를 안해줘서 그런가? <br/>
--> DBSave 안에서 sql Execute 예외처리 추가 -> GlobalQueue에서 꺼내올때 문제? <br/>
-Job과 DBJob 분리 확실히 하기. _jobCount와 _dbJobCount 따로 사용하기. 공유하게되면 Worker에서 기아 발생<br/><br/>
+4. 클라이언트 링커 오류 해결
+ODBC 링커 오류: odbc32.lib 추가하여 해결
 
-DB message Save 및 xml parser 수정. Out 추가. spInsertChatMessage 최적화 (완료) <br/>
-Message에 serial 부여 -> DBAsync 실패 후 JobQueue에 재등록시 message 순서 보장 <br/>
-Server에서 PlayerId와 lastMessageId를 hash로 갖고있기. -> Client에서 가지고 요청하면 유실될 가능성 있음 (완료) <br/>
-S_CHAT으로 Broadcast할게 생기면 각 Room에서의 Broadcast 기준.<br/><br/>
+5. DBConnection Pop 시 nullptr 보호
+2회 재시도 로직 추가 (spin 2회)
 
-# SQL Server OUTPUT + SET과 SELECT 조합<br/>
-OUTPUT + SET -> OUT 파라미터에 값을 채움 -> <br/>
-Fetch() 대신 SQLMoreResults() 사용을 고려 <br/>
-OUTPUT만 받는다면 Fetch()는 오히려 실패할 수 있다. SQL Server는 OUTPUT 값은 결과셋을 다 넘긴 후에야 접근 가능. <br/>
-SELECT → Fetch()로 소비 <br/>
-OUTPUT → SQLMoreResults() 이후 바인딩된 값 접근 가능 -> SELECT + OUTPUT 조합이면 Fetch -> SQLMoreResults()<br/>
-OUTPUT만 있는 경우에도 SQLMoreResults()는 호출 필요 (ODBC는 커서 흐름을 단계별로 봄)<br/><br/>
+실패 시 로그 또는 예외 처리
 
-SELECT -> Fetch로 값을 가져옴<br/>
+6. 패킷 구조 및 플레이어 흐름 정비
+GameSession, Player, Room 구조 재정비
 
-PING / PONG 처리. Client Ping <-> Server Pong -> Client Pong <-> Server Ping 으로 변경<br/>
-Server에서 Ping 보내는 WorkerThread 하나 추가. 확장성 고려. RoomId를 가질경우. RoomManager에서 각 Room 의 BroadcastPing 호출하게끔. 현재는 하나의 룸<br/>
-Session 관리 : 기존 Set<GameSessionRef> 에서 unordered_map<sessionId, GameSessionRef> 로 변경 -> SessionId로 관리할 수 있게.<br/>
-Enter/Leave 패킷으로 처리 -> Enter/Leave 에서 본인에게 Send + Spawn/Despawn 으로 타인에게 Broadcast 로 나눠서 보내기.<br/>
+Client → Connect → Server → Login → DBConnect → Enter → Broadcast 흐름 확립
 
-PING / PONG 처리 중. GameSession 내에서 OnDisconnect 부분에 Session 정리와 Room::Leave를 두어 IocpEvent로 Dispatch가 깨어나 호출하게 될때 처리.<br/>
-하지만 Server에서 Client의 연결 끊김을 감지하고 Kick해야하는 상황에서 문제 발생. Disconnect 호출해도 Dispatch가 동작이 안될수도.<br/>
--> Room 안에서 처리? _players 반복문 도중 erase 되는 문제 발견 -> 삭제할 컨테이너 요소 따로 담아두고 -> 반복문 종료시 Leave 동기함수로 바로 호출<br/>
--> 이러면 GameSession은 어디서 지워줘야하나..<br/><br/>
+7. DBJobQueue 실행 안되는 문제 분석
+DoDBAsync 등록 이후 실행되지 않던 이슈:
 
-DB Message Insert에서 messageId를 사용. DBSaveMessage 내에서 Execute 실패시. retry 간단 변수 추가. DelayPush, Priority DBJobQueue 등 신기한거 많았음.<br/>
+LCurrentJobQueue와 DBJobQueue 간 구분
+
+첫 접근 쓰레드에서 처리 누락 가능성
+
+Execute() 내부 예외 처리 강화
+
+해결:
+
+JobQueue 실행 흐름 전수 검사
+
+DBSave() 내 예외 처리 및 GlobalQueue 추적 강화
+
+8. DB 메시지 저장 최적화 및 안정성 강화
+spInsertChatMessage 저장 절차 개선
+
+xml 파서에서 <out="true"> 파라미터 적용 처리 완료
+
+메시지에 serial 부여 → 실패 시 재전송 가능
+
+PlayerId + lastMessageId 조합으로 메시지 순서 보장
+
+9. SQL Server OUTPUT + SELECT 혼합 처리
+OUTPUT + SELECT 조합 시 Fetch → SQLMoreResults 호출 필요
+
+SELECT → Fetch()
+OUTPUT → SQLMoreResults() 이후 OUT 파라미터 접근 가능
+
+10. Ping / Pong 구조 개선
+기존: Client Ping → Server Pong
+
+변경: Server Ping → Client Pong 응답 구조로 재설계
+
+RoomManager 기반 Ping Broadcast 확장 고려
+
+Session 관리: unordered_map<sessionId, GameSessionRef> 구조로 변경
+
+입장/퇴장 시:
+
+본인: Send
+
+타인: Broadcast(Spawn/Despawn)
+
+11. OnDisconnected 처리 개선
+GameSession::OnDisconnected 시:
+
+ownerSession.reset()
+
+Room::Leave() 호출 등록
+
+Ping Timeout 등으로 인한 Kick 시:
+
+_players 반복 중 erase() 문제 → 제거 대상 별도 저장 후 처리
+
+Room 내부에서 Leave() 호출로 마무리
+
+12. DB 실패 시 Retry 흐름 설계
+DBSaveMessage 내 Execute() 실패 시:
+
+retry 변수 추가
+
+추후 DelayPush, Priority DBJobQueue 적용 가능성 탐색
 
 ## 1. 최근 채팅 메시지 조회 및 역순 출력 문제 해결
 
