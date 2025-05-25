@@ -7,6 +7,29 @@
 #include "ClientPacketHandler.h"
 #include <Convert.h>
 
+void Room::Update()
+{
+	const uint64 now = ::GetTickCount64();
+
+	if (now >= _nextCleanupTime)
+	{
+		CleanupPlayers();                // 죽은 세션 정리
+		_nextCleanupTime = now + 1000;
+	}
+
+	if (now >= _nextPingCheckTime)
+	{
+		CheckPingTimeout();              // 응답 없는 세션 킥
+		_nextPingCheckTime = now + 5000;
+	}
+
+	if (now >= _nextPingTime)
+	{
+		BroadcastPing();                 // Ping 전송
+		_nextPingTime = now + 5000;
+	}
+}
+
 void Room::Enter(GameSessionRef gameSession, PlayerRef player)
 {
 	_players[player->playerId] = player;
@@ -48,25 +71,11 @@ void Room::Enter(GameSessionRef gameSession, PlayerRef player)
 	}
 	auto it = _lastSentMessageIdPerUser.find(player->playerId);
 	if (it != _lastSentMessageIdPerUser.end())
-		this->DoDBAsync(&Room::DBLoadRecentMessages, gameSession, _lastSentMessageIdPerUser[player->playerId]);
-
-	// Room에 입장 S_CHAT 알림
 	{
-		Protocol::S_CHAT chatPkt;
-
-		chatPkt.set_player_id(player->playerId);
-		chatPkt.set_name(player->name);
-		string message = u8"[" + player->name + u8"] 님이 입장하셨습니다.";
-		chatPkt.set_message(message);
-		chatPkt.set_timestamp(Convert::GetCurrentEpochMilli());
-
-		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(chatPkt);
-		wstring wMessage = Convert::UTF8ToWStringDynamic(message);
-		int32 retryCount = 0;
-		int64 serial = _currentChatSerial++;
-		this->DoDBAsync(&Room::DBSaveMessage, gameSession, wMessage, serial, retryCount);
-		this->DoAsync(&Room::Broadcast, sendBuffer);
+		this->DoDBAsync(&Room::DBLoadRecentMessages, gameSession, _lastSentMessageIdPerUser[player->playerId]);
 	}
+	else
+		this->DoDBAsync(&Room::DBLoadRecentMessages, gameSession, -1);
 }
 
 void Room::Leave(GameSessionRef gameSession, PlayerRef player)
@@ -100,24 +109,13 @@ void Room::Leave(GameSessionRef gameSession, PlayerRef player)
 
 void Room::Broadcast(SendBufferRef sendBuffer)
 {
-	for (auto it = _players.begin(); it != _players.end(); )
+	for (auto& [id, player] : _players)
 	{
-		auto& player = it->second;
-		if (!player)
-		{
-			it = _players.erase(it);
-			continue;
-		}
-
 		auto session = player->ownerSession.lock();
-		if (!session)
+		if (session)
 		{
-			it = _players.erase(it);
-			continue;
+			session->Send(sendBuffer);
 		}
-
-		session->Send(sendBuffer);
-		++it;
 	}
 }
 
@@ -144,17 +142,31 @@ void Room::BroadcastSysMessage(const string& message)
 	Broadcast(sendBuffer);
 }
 
-void Room::BroadcastPing()
+void Room::BroadcastEnter(GameSessionRef gameSession, PlayerRef player)
 {
-	uint64 now = ::GetTickCount64();
+	Protocol::S_CHAT chatPkt;
 
-	Protocol::S_PING pingPkt;
-	pingPkt.set_timestamp(now);
-	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(pingPkt);
+	chatPkt.set_player_id(player->playerId);
+	chatPkt.set_name(player->name);
+	string message = u8"[" + player->name + u8"] 님이 입장하셨습니다.";
+	chatPkt.set_message(message);
+	chatPkt.set_timestamp(Convert::GetCurrentEpochMilli());
 
-	wcout << "Server Send : Broadcast Ping test. Time = " << now << endl;
+	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(chatPkt);
+	wstring wMessage = Convert::UTF8ToWStringDynamic(message);
+	int32 retryCount = 0;
+	int64 serial = _currentChatSerial++;
+	this->DoDBAsync(&Room::DBSaveMessage, gameSession, wMessage, serial, retryCount);
+	this->DoAsync(&Room::Broadcast, sendBuffer);
+}
 
-	Broadcast(sendBuffer);
+void Room::SendLoginFail(GameSessionRef gameSession, Protocol::Cause cause, string msg)
+{
+	Protocol::S_LOGIN_FAIL pkt;
+	pkt.set_cause(cause);
+	pkt.set_message(msg);
+	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(pkt);
+	gameSession->Send(sendBuffer);
 }
 
 void Room::DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, string name, int64 lastSerial)
@@ -219,21 +231,51 @@ void Room::DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, stri
 
 	gameSession->_currentPlayer = player;
 
-	DoAsync(&Room::Enter, gameSession, player);	
+	DoAsync(&Room::Enter, gameSession, player);
 }
 
-void Room::SendLoginFail(GameSessionRef gameSession, Protocol::Cause cause, string msg)
+void Room::DBSaveMessage(DBConnection* dbConn, GameSessionRef gameSession, wstring wMsgCopy, int64 serial, int32 retryCount)
 {
-	Protocol::S_LOGIN_FAIL pkt;
-	pkt.set_cause(cause);
-	pkt.set_message(msg);
-	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(pkt);
-	gameSession->Send(sendBuffer);
+	SP::InsertChatMessage insert(*dbConn);
+	insert.In_Player_id(gameSession->_currentPlayer->playerId);
+	insert.In_Message(wMsgCopy.c_str(), static_cast<int32>(wMsgCopy.length()));
+	insert.In_Serial(serial);
+	int32 messageId = -1;
+	insert.Out_Message_id(messageId);
+	if (!insert.Execute())
+	{
+		// TODO : Job 재등록
+		if (retryCount < 2)
+		{
+			DoDBAsync(&Room::DBSaveMessage, gameSession, wMsgCopy, serial, ++retryCount);
+		}
+		else
+		{
+			// 포기하고 로깅
+			wcout << L"[DB FATAL] 채팅 저장 실패 : Serial=" << serial;
+		}
+	}
+	while (dbConn->MoreResults()) {}
+	if (messageId <= 0)
+	{
+		// TODO : 
+	}
+	for (auto& [i, p] : _players)
+	{
+		_lastSentMessageIdPerUser[i] = serial;
+	}
 }
 
 // Client 재 연결시 마지막 수신 messageId로부터 메시지 로드.
 void Room::DBLoadRecentMessages(DBConnection* dbConn, GameSessionRef session, int lastSerial)
 {
+	if (lastSerial == -1)
+	{
+		if (session && session->_currentPlayer)
+			DoAsync(&Room::BroadcastEnter, session, session->_currentPlayer);
+		return;
+	}
+
 	SP::GetRecentChatMessages getMessage(*dbConn);
 	getMessage.In_LastSerial(lastSerial);
 
@@ -265,7 +307,6 @@ void Room::DBLoadRecentMessages(DBConnection* dbConn, GameSessionRef session, in
 		if (count++ >= maxCount)
 			break;
 
-		// 클라이언트에게 전송할 패킷 생성
 		Protocol::S_CHAT chatPkt;
 		chatPkt.set_message_id(messageId);
 		chatPkt.set_player_id(playerId);
@@ -275,13 +316,41 @@ void Room::DBLoadRecentMessages(DBConnection* dbConn, GameSessionRef session, in
 		const string& sendMsg = Convert::WStringToUTF8(messageBuffer);
 		chatPkt.set_message(sendMsg);
 
-		wcout << "ID[" << playerId << "], NAME[" << _players[playerId] << "], SERIAL[" << serial << "]-" << messageBuffer << endl;
-
 		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(chatPkt);
 		session->Send(sendBuffer);
 	}
+	if (session && session->_currentPlayer)
+		DoAsync(&Room::BroadcastEnter, session, session->_currentPlayer);
 }
 
+void Room::CleanupPlayers()
+{
+	for (auto it = _players.begin(); it != _players.end(); )
+	{
+		const auto& player = it->second;
+		if (!player || player->ownerSession.expired())
+		{
+			it = _players.erase(it);
+		}
+		else
+		{
+			++it;
+		}
+	}
+}
+
+void Room::BroadcastPing()
+{
+	uint64 now = ::GetTickCount64();
+
+	Protocol::S_PING pingPkt;
+	pingPkt.set_timestamp(now);
+	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(pingPkt);
+
+	wcout << "Server Send : Broadcast Ping test. Time = " << now << endl;
+
+	DoAsync(&Room::Broadcast, sendBuffer);
+}
 
 void Room::CheckPingTimeout()
 {
@@ -289,7 +358,6 @@ void Room::CheckPingTimeout()
 		return;
 
 	uint64 now = ::GetTickCount64();
-	Vector<PlayerRef> timedOutPlayers;
 
 	// 순회 도중 Leave -> _players.erase 위험
 	for (auto& [id, player] : _players)
@@ -301,51 +369,20 @@ void Room::CheckPingTimeout()
 		if (!session)
 			continue;
 
-		// 20초 이상 응답 없으면 Disconnect
 		if ((now - session->_lastPongTime) >= 20000)
 		{
-			wcout << L"Kicking session: " << session->GetSessionId() << endl;
-			timedOutPlayers.push_back(player); // 목록에 추가
-		}
-	}
+			wcout << L"[Ping Timeout] Kicking session: " << session->GetSessionId() << endl;
 
-	// 반복문이 끝난 뒤 안전하게 삭제
-	for (PlayerRef p : timedOutPlayers)
-	{
-		auto session = p->ownerSession.lock();
-		session->Disconnect(L"Kick");
+			// 곧바로 Disconnect X, Room Job으로 Kick(Disconnect) 예약
+			PlayerRef p = player;
+			DoAsync(&Room::Kick, p);
+		}
 	}
 }
 
-//
-void Room::DBSaveMessage(DBConnection* dbConn, GameSessionRef gameSession, wstring wMsgCopy, int64 serial, int32 retryCount)
+void Room::Kick(PlayerRef player)
 {
-	SP::InsertChatMessage insert(*dbConn);
-	insert.In_Player_id(gameSession->_currentPlayer->playerId);
-	insert.In_Message(wMsgCopy.c_str(), static_cast<int32>(wMsgCopy.length()));
-	insert.In_Serial(serial);
-	int32 messageId = -1;
-	insert.Out_Message_id(messageId);
-	if (!insert.Execute())
-	{
-		// TODO : Job 재등록
-		if (retryCount < 2)
-		{
-			DoDBAsync(&Room::DBSaveMessage, gameSession, wMsgCopy, serial, ++retryCount);
-		}
-		else
-		{
-			// 포기하고 로깅
-			wcout << L"[DB FATAL] 채팅 저장 실패 : Serial=" << serial;
-		}
-	}
-	while (dbConn->MoreResults()) {}
-	if (messageId <= 0)
-	{
-		// TODO : 
-	}
-	for (auto& [i, p] : _players)
-	{
-		_lastSentMessageIdPerUser[i] = serial;
-	}
+	auto session = player->ownerSession.lock();
+	if (session)
+		session->Disconnect(L"Ping Timeout");
 }

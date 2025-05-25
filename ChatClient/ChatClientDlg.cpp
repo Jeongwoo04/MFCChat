@@ -12,7 +12,7 @@
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-#include <Convert.h>
+
 #include "SocketUtils.h"
 
 // 응용 프로그램 정보에 사용되는 CAboutDlg 대화 상자입니다.
@@ -169,21 +169,6 @@ HCURSOR CChatClientDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
-std::string csToUTF8(const CString& str) {
-	std::wstring wstr(str);
-	if (wstr.empty()) return {};
-
-	int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, nullptr, 0, nullptr, nullptr);
-	std::string utf8Str(sizeNeeded, 0);
-	WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, &utf8Str[0], sizeNeeded, nullptr, nullptr);
-
-	// null 문자 제거
-	if (!utf8Str.empty() && utf8Str.back() == '\0')
-		utf8Str.pop_back();
-
-	return utf8Str;
-}
-
 void CChatClientDlg::OnBnClickedSendBtn()
 {
 	ServerSessionRef serverSession = _serverSession;
@@ -195,12 +180,12 @@ void CChatClientDlg::OnBnClickedSendBtn()
 	GetDlgItemText(IDC_CHAT_EDIT, chtMsg);
 	SetDlgItemText(IDC_CHAT_EDIT, L"");
 
-	serverSession->SetName(csToUTF8(userName));
+	serverSession->SetName(string(CW2A(userName, CP_UTF8)));
 
 	if (chtMsg == L"")
 		return;
 	Protocol::C_CHAT chatPkt;
-	chatPkt.set_message(csToUTF8(chtMsg));
+	chatPkt.set_message(CW2A(chtMsg, CP_UTF8));
 	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(chatPkt);
 	_serverSession->Send(sendBuffer);
 }
@@ -262,10 +247,13 @@ void CChatClientDlg::OnOK()
 
 void CChatClientDlg::OnCancel()
 {
+	if (_isConnected)
+	{
+		Protocol::C_LEAVE pkt;
+		auto sendBuffer = ServerPacketHandler::MakeSendBuffer(pkt);
+		_serverSession->Send(sendBuffer);
+	}
 	// TODO: 여기에 특수화된 코드를 추가 및/또는 기본 클래스를 호출합니다.
-	Protocol::C_LEAVE pkt;
-	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(pkt);
-	_serverSession->Send(sendBuffer);
 
 	this_thread::sleep_for(10ms);
 	CDialogEx::OnCancel();

@@ -22,7 +22,8 @@
 
 enum
 {
-	WORKER_TICK = 64
+	WORKER_TICK = 64,
+	ROOM_UPDATE_TICK = 50
 };
 
 void DoWorkerJob(ServerServiceRef& service)
@@ -36,11 +37,9 @@ void DoWorkerJob(ServerServiceRef& service)
 
 		// 예약된 일감 처리
 		ThreadManager::DistributeReservedJobs();
-		//ThreadManager::DistributeReservedDBJobs();
 
 		// 글로벌 큐
 		ThreadManager::DoGlobalQueueWork();
-		//ThreadManager::DoGDBJobQueueWork();
 	}
 }
 
@@ -56,24 +55,13 @@ void DoDBWorkerJob()
 	}
 }
 
-void DoPingWorkerJob()
+void DoRoomUpdateJob()
 {
 	while (true)
 	{
-		this_thread::sleep_for(5s);
+		this_thread::sleep_for(chrono::milliseconds(ROOM_UPDATE_TICK));
 
-		// TODO : Room마다 Ping 전송 예약
-
-		GRoom->DoAsync(&Room::BroadcastPing);
-	}
-}
-
-void MonitorThread()
-{
-	while (true)
-	{
-		this_thread::sleep_for(5s);
-		GRoom->DoAsync(&Room::CheckPingTimeout);
+		GRoom->DoAsync(&Room::Update);
 	}
 }
 
@@ -122,11 +110,7 @@ int main()
 
 	GThreadManager->Launch([]()
 		{
-			DoPingWorkerJob();
-		});
-	GThreadManager->Launch([]()
-		{
-			MonitorThread();
+			DoRoomUpdateJob();
 		});
 
 	GThreadManager->Join();
