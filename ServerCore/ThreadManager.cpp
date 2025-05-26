@@ -18,6 +18,7 @@ ThreadManager::ThreadManager()
 ThreadManager::~ThreadManager()
 {
 	Join();
+	DestroyTLS();
 }
 
 void ThreadManager::Launch(function<void(void)> callback)
@@ -46,11 +47,16 @@ void ThreadManager::InitTLS()
 {
 	static Atomic<uint32> SThreadId = 1;
 	LThreadId = SThreadId.fetch_add(1);
+	LLockStack = new stack<int32>();
 }
 
 void ThreadManager::DestroyTLS()
 {
-
+	if (LLockStack)
+	{
+		delete LLockStack;
+		LLockStack = nullptr;
+	}
 }
 
 void ThreadManager::DoGlobalQueueWork()

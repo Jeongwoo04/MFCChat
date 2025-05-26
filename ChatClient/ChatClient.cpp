@@ -85,12 +85,6 @@ BOOL CChatClientApp::InitInstance()
 		delete pShellManager;
 	}
 
-	if (GThreadManager)
-	{
-		delete GThreadManager;
-		GThreadManager = nullptr;
-	}
-
 	if (GServerSessionManager)
 	{
 		delete GServerSessionManager;
