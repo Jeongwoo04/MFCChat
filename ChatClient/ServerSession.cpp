@@ -10,42 +10,42 @@ void ServerSession::OnConnected()
 	if (!isReconnect)
 		GServerSessionManager->SetReconnectedTrue();
 
-	_dig->_isConnected = true;
-	_dig->_serverSession = static_pointer_cast<ServerSession>(shared_from_this());
-	
+	if (_dig)
+	{
+		_dig->_isConnected = true;
+		_dig->_serverSession = static_pointer_cast<ServerSession>(shared_from_this());
+	}
+
 	// connection
 	// 최초 접속
-	if (isReconnect == false)
-	{
-		Protocol::C_LOGIN loginPkt;
+	if (isReconnect)
+		SendReconnectPacket();
+	else
+		SendLoginPacket();
+}
 
-		CString str;
-		_dig->chatName.GetWindowTextW(str);
+void ServerSession::SendLoginPacket()
+{
+	Protocol::C_LOGIN loginPkt;
+	loginPkt.set_name(GetUserNameFromUI());
 
-		loginPkt.set_name(CW2A(str, CP_UTF8));
+	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(loginPkt);
+	Send(sendBuffer);
+}
 
-		// TODO : webserver 외부 인증
-		auto sendBuffer = ServerPacketHandler::MakeSendBuffer(loginPkt);
-		Send(sendBuffer);
-	}
-	else // 재접속
-	{
-		Protocol::C_RECONNECT reconnPkt;
+void ServerSession::SendReconnectPacket()
+{
+	Protocol::C_RECONNECT reconnPkt;
+	reconnPkt.set_name(GetUserNameFromUI());
+	reconnPkt.set_last_message_id(GServerSessionManager->GetLastMessageId());
 
-		CString str;
-		_dig->chatName.GetWindowTextW(str);
-
-		reconnPkt.set_name(CW2A(str, CP_UTF8));
-		reconnPkt.set_last_serial(GServerSessionManager->GetChatSerial());
-		auto sendBuffer = ServerPacketHandler::MakeSendBuffer(reconnPkt);
-		Send(sendBuffer);
-	}
+	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(reconnPkt);
+	Send(sendBuffer);
 }
 
 void ServerSession::OnRecvPacket(BYTE* buffer, int32 len)
 {
 	PacketSessionRef session = GetPacketSessionRef();
-	PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
 
 	ServerPacketHandler::HandlePacket(session, buffer, len);
 }
@@ -66,7 +66,21 @@ void	ServerSession::OnDisconnected()
 	this->_otherPlayers.clear();
 	this->SetName("");
 	this->_dig->_isConnected = false;
+
 	if (!_dig || !_dig->IsWindowVisible())
 		return;
-	this->_dig->AddEventString(L"[System] 서버와의 연결이 종료되었습니다.");
+	if (_dig->IsWindowVisible())
+		_dig->AddEventString(L"[System] 서버와의 연결이 종료되었습니다.");
+}
+
+string ServerSession::GetUserNameFromUI() const
+{
+	if (_dig == nullptr)
+		return "";
+
+	CString str;
+	_dig->chatName.GetWindowTextW(str);
+	
+	CW2A utf8(str, CP_UTF8);
+	return std::string(utf8);
 }

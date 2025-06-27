@@ -3,8 +3,7 @@
 class Player
 {
 public:
-	uint64					playerId = 0;
-	string					name;
+	Protocol::PlayerInfo _info;
 	weak_ptr<GameSession>	ownerSession; // Cycle
 };
 

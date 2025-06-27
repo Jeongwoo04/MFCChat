@@ -12,12 +12,14 @@ enum : uint16
 	PKT_S_ENTER = 1003,
 	PKT_C_CHAT = 1004,
 	PKT_S_CHAT = 1005,
-	PKT_C_LEAVE = 1006,
-	PKT_S_LEAVE = 1007,
-	PKT_S_SPAWN = 1008,
-	PKT_S_DESPAWN = 1009,
-	PKT_C_PONG = 1010,
-	PKT_S_PING = 1011,
+	PKT_S_CHAT_HISTORY = 1006,
+	PKT_C_LEAVE = 1007,
+	PKT_S_LEAVE = 1008,
+	PKT_S_SPAWN = 1009,
+	PKT_S_DESPAWN = 1010,
+	PKT_C_SCROLL_UP = 1011,
+	PKT_C_PONG = 1012,
+	PKT_S_PING = 1013,
 };
 
 // Custom Handlers
@@ -26,6 +28,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt);
 bool Handle_C_RECONNECT(PacketSessionRef& session, Protocol::C_RECONNECT& pkt);
 bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt);
 bool Handle_C_LEAVE(PacketSessionRef& session, Protocol::C_LEAVE& pkt);
+bool Handle_C_SCROLL_UP(PacketSessionRef& session, Protocol::C_SCROLL_UP& pkt);
 bool Handle_C_PONG(PacketSessionRef& session, Protocol::C_PONG& pkt);
 
 class ClientPacketHandler
@@ -39,6 +42,7 @@ public:
 		GPacketHandler[PKT_C_RECONNECT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_RECONNECT>(Handle_C_RECONNECT, session, buffer, len); };
 		GPacketHandler[PKT_C_CHAT] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_CHAT>(Handle_C_CHAT, session, buffer, len); };
 		GPacketHandler[PKT_C_LEAVE] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_LEAVE>(Handle_C_LEAVE, session, buffer, len); };
+		GPacketHandler[PKT_C_SCROLL_UP] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_SCROLL_UP>(Handle_C_SCROLL_UP, session, buffer, len); };
 		GPacketHandler[PKT_C_PONG] = [](PacketSessionRef& session, BYTE* buffer, int32 len) { return HandlePacket<Protocol::C_PONG>(Handle_C_PONG, session, buffer, len); };
 	}
 
@@ -50,6 +54,7 @@ public:
 	static SendBufferRef MakeSendBuffer(Protocol::S_LOGIN_FAIL& pkt) { return MakeSendBuffer(pkt, PKT_S_LOGIN_FAIL); }
 	static SendBufferRef MakeSendBuffer(Protocol::S_ENTER& pkt) { return MakeSendBuffer(pkt, PKT_S_ENTER); }
 	static SendBufferRef MakeSendBuffer(Protocol::S_CHAT& pkt) { return MakeSendBuffer(pkt, PKT_S_CHAT); }
+	static SendBufferRef MakeSendBuffer(Protocol::S_CHAT_HISTORY& pkt) { return MakeSendBuffer(pkt, PKT_S_CHAT_HISTORY); }
 	static SendBufferRef MakeSendBuffer(Protocol::S_LEAVE& pkt) { return MakeSendBuffer(pkt, PKT_S_LEAVE); }
 	static SendBufferRef MakeSendBuffer(Protocol::S_SPAWN& pkt) { return MakeSendBuffer(pkt, PKT_S_SPAWN); }
 	static SendBufferRef MakeSendBuffer(Protocol::S_DESPAWN& pkt) { return MakeSendBuffer(pkt, PKT_S_DESPAWN); }

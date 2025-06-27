@@ -48,16 +48,16 @@ PROTOBUF_NAMESPACE_CLOSE
 namespace Protocol {
 
 enum Cause : int {
-  NONE = 0,
-  INVAILD_NAME = 1,
-  DB_ERROR = 2,
-  ALREADY_LOGGED_IN = 3,
+  CAUSE_NONE = 0,
+  CAUSE_INVAILD_NAME = 1,
+  CAUSE_DB_ERROR = 2,
+  CAUSE_ALREADY_LOGGED_IN = 3,
   Cause_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
   Cause_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
 };
 bool Cause_IsValid(int value);
-constexpr Cause Cause_MIN = NONE;
-constexpr Cause Cause_MAX = ALREADY_LOGGED_IN;
+constexpr Cause Cause_MIN = CAUSE_NONE;
+constexpr Cause Cause_MAX = CAUSE_ALREADY_LOGGED_IN;
 constexpr int Cause_ARRAYSIZE = Cause_MAX + 1;
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* Cause_descriptor();
@@ -73,6 +73,33 @@ inline bool Cause_Parse(
     ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, Cause* value) {
   return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<Cause>(
     Cause_descriptor(), name, value);
+}
+enum RequestHistory : int {
+  REQUEST_NONE = 0,
+  REQUEST_OLDEST = 1,
+  REQUEST_NEWEST = 2,
+  REQUEST_RESET = 3,
+  RequestHistory_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::min(),
+  RequestHistory_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<int32_t>::max()
+};
+bool RequestHistory_IsValid(int value);
+constexpr RequestHistory RequestHistory_MIN = REQUEST_NONE;
+constexpr RequestHistory RequestHistory_MAX = REQUEST_RESET;
+constexpr int RequestHistory_ARRAYSIZE = RequestHistory_MAX + 1;
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RequestHistory_descriptor();
+template<typename T>
+inline const std::string& RequestHistory_Name(T enum_t_value) {
+  static_assert(::std::is_same<T, RequestHistory>::value ||
+    ::std::is_integral<T>::value,
+    "Incorrect type passed to function RequestHistory_Name.");
+  return ::PROTOBUF_NAMESPACE_ID::internal::NameOfEnum(
+    RequestHistory_descriptor(), enum_t_value);
+}
+inline bool RequestHistory_Parse(
+    ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, RequestHistory* value) {
+  return ::PROTOBUF_NAMESPACE_ID::internal::ParseNamedEnum<RequestHistory>(
+    RequestHistory_descriptor(), name, value);
 }
 // ===================================================================
 
@@ -100,6 +127,11 @@ template <> struct is_proto_enum< ::Protocol::Cause> : ::std::true_type {};
 template <>
 inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::Cause>() {
   return ::Protocol::Cause_descriptor();
+}
+template <> struct is_proto_enum< ::Protocol::RequestHistory> : ::std::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::Protocol::RequestHistory>() {
+  return ::Protocol::RequestHistory_descriptor();
 }
 
 PROTOBUF_NAMESPACE_CLOSE

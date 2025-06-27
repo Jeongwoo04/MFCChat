@@ -5,6 +5,7 @@
 #include "framework.h"
 #include "ChatClient.h"
 #include "ChatClientDlg.h"
+#include "ChatListBox.h"
 #include "afxdialogex.h"
 #include "ThreadManager.h"
 #include "ServerSession.h"
@@ -100,6 +101,7 @@ BEGIN_MESSAGE_MAP(CChatClientDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_SEND_BTN, &CChatClientDlg::OnBnClickedSendBtn)
 	ON_BN_CLICKED(IDC_CONNECT_BTN, &CChatClientDlg::OnBnClickedConnectBtn)
 	ON_BN_CLICKED(IDOK, &CChatClientDlg::OnBnClickedOk)
+	ON_WM_VSCROLL()
 END_MESSAGE_MAP()
 
 
@@ -108,6 +110,7 @@ END_MESSAGE_MAP()
 BOOL CChatClientDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
+	chatList.SetOwnerDlg(this);
 	GetDlgItem(IDOK)->SetWindowTextW(L"나가기");
 
 	// 이 대화 상자의 아이콘을 설정합니다.  응용 프로그램의 주 창이 대화 상자가 아닐 경우에는
@@ -259,10 +262,44 @@ void CChatClientDlg::OnCancel()
 	CDialogEx::OnCancel();
 }
 
-
 void CChatClientDlg::OnBnClickedOk()
 {
 	Protocol::C_LEAVE pkt;
 	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(pkt);
 	_serverSession->Send(sendBuffer);
+}
+
+void CChatClientDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
+{
+	CDialogEx::OnVScroll(nSBCode, nPos, pScrollBar);
+
+	int itemCount = chatList.GetCount();
+	int topIndex = chatList.GetTopIndex();
+	CRect rc;
+	chatList.GetClientRect(&rc);
+	int itemHeight = chatList.GetItemHeight(0);
+	int visibleCount = itemHeight > 0 ? rc.Height() / itemHeight : 0;
+
+	// 조건 체크: 비어있거나, 스크롤이 생기지 않았거나, 최상단이 아닌 경우
+	if (itemCount == 0 || itemCount <= visibleCount || topIndex != 0)
+		return;
+
+	static ULONGLONG lastScrollUpTime = 0;
+	ULONGLONG now = GetTickCount64();
+	const ULONGLONG scrollCooldownMs = 2000;
+
+	if (now - lastScrollUpTime < scrollCooldownMs)
+		return;
+
+	lastScrollUpTime = now;
+
+	// 현재 chatList가 최상단인지 확인
+	if (chatList.GetTopIndex() == 0)
+	{
+		Protocol::C_SCROLL_UP pkt;
+		pkt.set_oldest_message_id(GServerSessionManager->GetOldestMessageId());
+
+		auto sendBuffer = ServerPacketHandler::MakeSendBuffer(pkt);
+		_serverSession->Send(sendBuffer);
+	}
 }

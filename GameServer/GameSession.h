@@ -30,4 +30,5 @@ public:
 
 	uint64 _sessionId;
 	uint64 _lastPongTime;
+	uint64 _lastScrollUpTick = 0;
 };

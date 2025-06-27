@@ -14,6 +14,16 @@
 
 PacketHandlerFunc GPacketHandler[UINT16_MAX];
 
+static bool RequestLogin(GameSessionRef& gameSession, const string& name, int64 messageId)
+{
+	if (gameSession->_currentPlayer != nullptr)
+		return false;
+
+	GRoom->DoDBAsync(&Room::DBProcessLogin, gameSession, name, messageId);
+	return true;
+}
+
+
 bool Handle_INVALID(PacketSessionRef& session, BYTE* buffer, int32 len)
 {
 	PacketHeader* header = reinterpret_cast<PacketHeader*>(buffer);
@@ -29,12 +39,7 @@ bool Handle_C_LOGIN(PacketSessionRef& session, Protocol::C_LOGIN& pkt)
 	if (gameSession->_currentPlayer != nullptr)
 		return false;
 
-	string name = pkt.name();
-
-	int64 serial = 0;
-	GRoom->DoDBAsync(&Room::DBProcessLogin, gameSession, name, serial);
-
-	return true;
+	return RequestLogin(gameSession, pkt.name(), 0);
 }
 
 bool Handle_C_RECONNECT(PacketSessionRef& session, Protocol::C_RECONNECT& pkt)
@@ -45,11 +50,7 @@ bool Handle_C_RECONNECT(PacketSessionRef& session, Protocol::C_RECONNECT& pkt)
 	if (gameSession->_currentPlayer != nullptr)
 		return false;
 
-	string name = pkt.name();
-	int64 serial = pkt.last_serial();
-	GRoom->DoDBAsync(&Room::DBProcessLogin, gameSession, name, serial);
-
-	return true;
+	return RequestLogin(gameSession, pkt.name(), pkt.last_message_id());
 }
 
 bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
@@ -57,24 +58,18 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
 	PlayerRef player = gameSession->_currentPlayer;
 
-	wstring wNameCopy = Convert::UTF8ToWStringDynamic(player->name);
+	if (player == nullptr)
+		return false;
+
+	int64 serial = GRoom->GetNextSerialId();
+		
+	const string& sendMsg = u8"[" + player->_info.name() + u8"]:" + pkt.message();
+	wstring wMessage = Convert::UTF8ToWStringDynamic(sendMsg);
 
 	int32 retryCount = 0;
-	int64 serial = GRoom->_currentChatSerial++;
-	const string& sendMsg = u8"[" + player->name + u8"]:" + pkt.message();
-	wstring wMessage = Convert::UTF8ToWStringDynamic(sendMsg);
-	GRoom->DoDBAsync(&Room::DBSaveMessage, gameSession, wMessage, serial, retryCount);
-	wcout << L"Send To Room) ID[" << player->playerId << "] " << "Name[" << wNameCopy << L"] Msg[" << wMessage << L"]" << endl;
+	GRoom->DoDBAsync(&Room::DBSaveMessage, player, wMessage, serial, retryCount);
 
-	Protocol::S_CHAT chatPkt;
-
-	chatPkt.set_serial(serial);
-	chatPkt.set_player_id(player->playerId);
-	chatPkt.set_name(player->name);
-	chatPkt.set_message(sendMsg);
-	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(chatPkt);
-
-	GRoom->DoAsync(&Room::Broadcast, sendBuffer);
+	GRoom->DoAsync(&Room::BroadcastChat, player, sendMsg, serial);
 
 	return true;
 }
@@ -84,7 +79,25 @@ bool Handle_C_LEAVE(PacketSessionRef& session, Protocol::C_LEAVE& pkt)
 	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
 
 	gameSession->Disconnect(L"Kick");
-	//GRoom->DoAsync(&Room::Leave, gameSession);
+
+	return true;
+}
+
+bool Handle_C_SCROLL_UP(PacketSessionRef& session, Protocol::C_SCROLL_UP& pkt)
+{
+	GameSessionRef gameSession = static_pointer_cast<GameSession>(session);
+
+	if (gameSession == nullptr)
+		return false;
+
+	const uint64 now = ::GetTickCount64();
+	const uint64 scrollCooldownMs = 2000; // 2ÃÊ ÄðÅ¸ÀÓ
+
+	if (now - gameSession->_lastScrollUpTick < scrollCooldownMs)
+		return true;
+
+	GRoom->DoDBAsync(&Room::DBLoadChatFromMessageId, gameSession, pkt.oldest_message_id(), Protocol::RequestHistory::REQUEST_OLDEST);
+
 	return true;
 }
 

@@ -22,20 +22,23 @@ namespace _pbi = _pb::internal;
 
 namespace Protocol {
 }  // namespace Protocol
-static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[1];
+static const ::_pb::EnumDescriptor* file_level_enum_descriptors_Enum_2eproto[2];
 static constexpr ::_pb::ServiceDescriptor const** file_level_service_descriptors_Enum_2eproto = nullptr;
 const uint32_t TableStruct_Enum_2eproto::offsets[1] = {};
 static constexpr ::_pbi::MigrationSchema* schemas = nullptr;
 static constexpr ::_pb::Message* const* file_default_instances = nullptr;
 
 const char descriptor_table_protodef_Enum_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\nEnum.proto\022\010Protocol*H\n\005Cause\022\010\n\004NONE\020"
-  "\000\022\020\n\014INVAILD_NAME\020\001\022\014\n\010DB_ERROR\020\002\022\025\n\021ALR"
-  "EADY_LOGGED_IN\020\003b\006proto3"
+  "\n\nEnum.proto\022\010Protocol*`\n\005Cause\022\016\n\nCAUSE"
+  "_NONE\020\000\022\026\n\022CAUSE_INVAILD_NAME\020\001\022\022\n\016CAUSE"
+  "_DB_ERROR\020\002\022\033\n\027CAUSE_ALREADY_LOGGED_IN\020\003"
+  "*]\n\016RequestHistory\022\020\n\014REQUEST_NONE\020\000\022\022\n\016"
+  "REQUEST_OLDEST\020\001\022\022\n\016REQUEST_NEWEST\020\002\022\021\n\r"
+  "REQUEST_RESET\020\003b\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Enum_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Enum_2eproto = {
-    false, false, 104, descriptor_table_protodef_Enum_2eproto,
+    false, false, 223, descriptor_table_protodef_Enum_2eproto,
     "Enum.proto",
     &descriptor_table_Enum_2eproto_once, nullptr, 0, 0,
     schemas, file_default_instances, TableStruct_Enum_2eproto::offsets,
@@ -54,6 +57,22 @@ const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* Cause_descriptor() {
   return file_level_enum_descriptors_Enum_2eproto[0];
 }
 bool Cause_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* RequestHistory_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_Enum_2eproto);
+  return file_level_enum_descriptors_Enum_2eproto[1];
+}
+bool RequestHistory_IsValid(int value) {
   switch (value) {
     case 0:
     case 1:

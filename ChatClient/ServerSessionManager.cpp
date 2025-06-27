@@ -3,7 +3,7 @@
 #include "ServerSession.h"
 
 ServerSessionManager* GServerSessionManager = nullptr;
-atomic<uint64_t> GServerSessionIdGenerator = 1;
+atomic<int64> GServerSessionIdGenerator = 1;
 
 void	ServerSessionManager::Add(ServerSessionRef session)
 {
@@ -16,9 +16,12 @@ void	ServerSessionManager::Remove(ServerSessionRef session)
 	_sessions.erase(session->GetSessionId());
 }
 
-ServerSessionRef ServerSessionManager::Find(uint64 sessionId)
+ServerSessionRef ServerSessionManager::Find(int64 sessionId)
 {
-	WRITE_LOCK;
-	ServerSessionRef session = _sessions[sessionId];
-	return session;
+	READ_LOCK;
+	auto it = _sessions.find(sessionId);
+	if (it != _sessions.end())
+		return it->second;
+
+	return nullptr;
 }

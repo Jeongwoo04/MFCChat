@@ -57,14 +57,26 @@ def ParseColumns(node, tables):
     query = node.text
     select_idx = max(query.rfind('SELECT'), query.rfind('select'))
     from_idx = max(query.rfind('FROM'), query.rfind('from'))
+    
     if select_idx > 0 and from_idx > 0 and from_idx > select_idx:
         table_name = query[from_idx+len('FROM') : -1].strip().split()[0]
         table_name = table_name.replace('[', '').replace(']', '').replace('dbo.', '')
         table = tables.get(table_name)
-        words = query[select_idx+len('SELECT') : from_idx].strip().split(",")
+        if not table:
+            return[]
+        
+        column_section = query[select_idx+len('select'):from_idx].strip()
+
+        if column_section.lower().startswith('top'):
+            column_section = ' '.join(column_section.split()[2:])  # "TOP 30" Á¦°Å
+
+        words = column_section.split(",")
         for word in words:
             column_name = word.strip().split()[0]
-            columns.append(Column(column_name, table.columns[column_name]))
+            column_name = column_name.replace('[', '').replace(']', '')
+            if column_name in table.columns:
+                columns.append(Column(column_name, table.columns[column_name]))
+
     elif select_idx > 0:
         word = query[select_idx+len('SELECT') : -1].strip().split()[0]
         if word.startswith('@@ROWCOUNT') or word.startswith('@@rowcount'):

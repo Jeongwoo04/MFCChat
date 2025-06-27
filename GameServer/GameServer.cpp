@@ -84,6 +84,7 @@ int main()
 	GDBConnectionPool->Push(dbConn);
 
 	ClientPacketHandler::Init();
+	GRoom->Init();
 
 	ServerServiceRef service = MakeShared<ServerService>(
 		NetAddress(L"127.0.0.1", 7777),

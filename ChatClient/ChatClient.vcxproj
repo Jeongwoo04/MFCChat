@@ -219,18 +219,19 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\DummyClient\Enum.pb.h" />
-    <ClInclude Include="..\DummyClient\Protocol.pb.h" />
-    <ClInclude Include="..\DummyClient\Struct.pb.h" />
     <ClInclude Include="..\GameServer\GenProcedures.h" />
     <ClInclude Include="ChatClient.h" />
     <ClInclude Include="ChatClientDlg.h" />
+    <ClInclude Include="ChatListBox.h" />
+    <ClInclude Include="Enum.pb.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Protocol.pb.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ServerPacketHandler.h" />
     <ClInclude Include="ServerSession.h" />
     <ClInclude Include="ServerSessionManager.h" />
+    <ClInclude Include="Struct.pb.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
@@ -254,6 +255,7 @@
     </ClCompile>
     <ClCompile Include="ChatClient.cpp" />
     <ClCompile Include="ChatClientDlg.cpp" />
+    <ClCompile Include="ChatListBox.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

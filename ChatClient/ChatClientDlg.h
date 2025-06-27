@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "ChatListBox.h"
 
 class ServerSession;
 using ServerSessionRef = shared_ptr<class ServerSession>;
@@ -32,12 +33,13 @@ protected:
 	afx_msg void CChatClientDlg::OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
+	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	DECLARE_MESSAGE_MAP()
 
 public:
 	afx_msg void	OnBnClickedSendBtn();
 	void			AddEventString(const WCHAR* ap_string);
-	CListBox		chatList;
+	CChatListBox	chatList;
 	CListBox		roomList;
 	CEdit			chatName;
 
@@ -47,6 +49,7 @@ public:
 public:
 	bool				_isConnected = false;
 	ServerSessionRef	_serverSession;
+	bool				_isRequestingOldChats = false;
 	virtual void OnOK();
 	virtual void OnCancel();
 	afx_msg void OnBnClickedOk();

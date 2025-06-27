@@ -32,10 +32,10 @@ void Session::Send(SendBufferRef sendBuffer)
 
 		if (_sendRegistered.exchange(true) == false)
 			registerSend = true; // stack 메모리 선언된 변수를 true로 켜줘서 선점
-	}
 
-	if (registerSend)
-		RegisterSend();
+		if (registerSend)
+			RegisterSend();
+	}	
 }
 
 bool Session::Connect()
@@ -165,7 +165,7 @@ void Session::RegisterSend()
 
 	// 보낼 데이터를 sendEvent에 등록
 	{
-		WRITE_LOCK;
+		//WRITE_LOCK; -> Multiple Lock 수정
 
 		int32 writeSize = 0;
 		while (_sendQueue.empty() == false)

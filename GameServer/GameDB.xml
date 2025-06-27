@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <GameDB>
 	<Table name="Player" desc="플레이어 정보">
-		<Column name="player_id" type="int" notnull="true" identity="1,1"/>
+		<Column name="player_id" type="bigint" notnull="true" identity="1,1"/>
 		<Column name="name" type="nvarchar(100)" notnull="true" />
 		<Index type="clustered">
 			<PrimaryKey/>
@@ -12,8 +12,8 @@
 		</Index>
 	</Table>
 	<Table name="Login" desc="로그인 기록">
-		<Column name="login_id" type="int" notnull="true" identity="1,1"/>
-		<Column name="player_id" type="int" notnull="true" />
+		<Column name="login_id" type="bigint" notnull="true" identity="1,1"/>
+		<Column name="player_id" type="bigint" notnull="true" />
 		<Column name="login_time" type="datetime" notnull="true" />
 		<Index type="clustered">
 			<PrimaryKey/>
@@ -24,8 +24,8 @@
 		</Index>
 	</Table>
 	<Table name="ChatMessage" desc="채팅 메시지 기록">
-		<Column name="message_id" type="int" notnull="true" identity="1,1"/>
-		<Column name="player_id" type="int" notnull="true" />
+		<Column name="message_id" type="bigint" notnull="true" identity="1,1"/>
+		<Column name="player_id" type="bigint" notnull="true" />
 		<Column name="message" type="nvarchar(200)" notnull="true" />
 		<Column name="timestamp" type="datetime" notnull="true" />
 		<Column name="serial" type="bigint" notnull="true" default="0" desc="Room 내 채팅 순번" />
@@ -44,7 +44,7 @@
 
 	<Procedure name="spInsertPlayer">
 		<Param name="@name" type="nvarchar(100)" />
-		<Param name="@player_id" type="int" out="true" />
+		<Param name="@player_id" type="bigint" out="true" />
 		<Body>
 			<![CDATA[
 			INSERT INTO [dbo].[Player] ([name]) VALUES (@name);
@@ -54,7 +54,7 @@
 	</Procedure>
 	<Procedure name="spGetPlayerIdByName">
 		<Param name="@name" type="nvarchar(100)" />
-		<Column name="player_id" type="int" />
+		<Column name="player_id" type="bigint" />
 		<Body>
 			<![CDATA[
 			SELECT player_id FROM [dbo].[Player] WHERE [name] = @name;
@@ -62,7 +62,7 @@
 		</Body>
 	</Procedure>
 	<Procedure name="spInsertLogin">
-		<Param name="@player_id" type="int" />
+		<Param name="@player_id" type="bigint" />
 		<Param name="@login_time" type="datetime" />
 		<Body>
 			<![CDATA[
@@ -71,10 +71,10 @@
 		</Body>
 	</Procedure>
 	<Procedure name="spInsertChatMessage">
-		<Param name="@player_id" type="int" />
+		<Param name="@player_id" type="bigint" />
 		<Param name="@message" type="nvarchar(200)" />
 		<Param name="@serial" type="bigint" />
-		<Param name="@message_id" type="int" out="true" />
+		<Param name="@message_id" type="bigint" out="true" />
 		<Body>
 			<![CDATA[
 			SET NOCOUNT ON;
@@ -86,17 +86,18 @@
 		]]>
 		</Body>
 	</Procedure>
-	<Procedure name="spGetRecentChatMessages">
-		<Param name="@lastSerial" type="bigint" />
+	<Procedure name="spGetRecentChatMessagesFromId">
+		<Param name="@messageId" type="bigint" />
+		<Param name="@needCount" type="bigint" />
 		<Body>
 			<![CDATA[
-			SELECT * FROM (
-				SELECT TOP 30 message_id, player_id, message, timestamp, serial
-				FROM ChatMessage
-				WHERE serial > @lastSerial
-				ORDER BY serial DESC
-			) AS Recent30
-			ORDER BY serial ASC
+				SELECT * FROM (
+					SELECT TOP (@needCount) message_id, player_id, message, timestamp, serial
+					FROM ChatMessage
+					WHERE message_id < @messageId
+					ORDER BY message_id DESC
+				) AS Recent
+				ORDER BY message_id ASC
 			]]>
 		</Body>
 	</Procedure>
