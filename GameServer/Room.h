@@ -20,8 +20,7 @@ public:
 	void Broadcast(SendBufferRef sendBuffer, int64 exceptId = 0);
 	void BroadcastChat(string message, PlayerRef sender, string name);
 
-	void SendMergeChat(GameSessionRef gameSession, int64 startMessageId);
-	void SendCacheChat(GameSessionRef gameSession);
+	void SendCacheChatFromId(GameSessionRef gameSession, int64 startMessageId);
 	void SendLoginFail(GameSessionRef gameSession, Protocol::Cause cause, string msg);
 
 	void DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, string name, int64 lastSerial = 0);

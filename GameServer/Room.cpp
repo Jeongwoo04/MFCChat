@@ -97,12 +97,12 @@ void Room::Enter(GameSessionRef gameSession, int64 messageId)
 			BroadcastChat(message, player, "SYSTEM");
 		}
 		else
-			GRoom->DoAsync(&Room::SendCacheChat, gameSession);
+			GRoom->DoAsync(&Room::SendCacheChatFromId, gameSession, _chatCache.front().message_id());
 	}		
 	else
 	{
 		messageId = _lastSentMessageIdPerUser[player->_info.player_id()];
-		GRoom->DoAsync(&Room::SendMergeChat, gameSession, messageId + 1); // reset -> cache 보내기
+		GRoom->DoAsync(&Room::SendCacheChatFromId, gameSession, messageId + 1); // reset -> cache 보내기
 	}
 }
 
@@ -185,15 +185,7 @@ void Room::BroadcastChat(string message, PlayerRef sender, string name)
 	DoDBAsync(&Room::DBSaveMessage, sender, wMessage, serial, retryCount, receiverIds);
 }
 
-void Room::SendCacheChat(GameSessionRef gameSession)
-{
-	if (_chatCache.empty())
-		return;
-
-	SendMergeChat(gameSession, _chatCache.front().message_id());
-}
-
-void Room::SendMergeChat(GameSessionRef gameSession, int64 startMessageId)
+void Room::SendCacheChatFromId(GameSessionRef gameSession, int64 startMessageId)
 {
 	if (_chatCache.empty())
 		return;
