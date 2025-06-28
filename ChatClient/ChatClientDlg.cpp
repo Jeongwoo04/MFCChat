@@ -268,38 +268,3 @@ void CChatClientDlg::OnBnClickedOk()
 	auto sendBuffer = ServerPacketHandler::MakeSendBuffer(pkt);
 	_serverSession->Send(sendBuffer);
 }
-
-void CChatClientDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
-{
-	CDialogEx::OnVScroll(nSBCode, nPos, pScrollBar);
-
-	int itemCount = chatList.GetCount();
-	int topIndex = chatList.GetTopIndex();
-	CRect rc;
-	chatList.GetClientRect(&rc);
-	int itemHeight = chatList.GetItemHeight(0);
-	int visibleCount = itemHeight > 0 ? rc.Height() / itemHeight : 0;
-
-	// 조건 체크: 비어있거나, 스크롤이 생기지 않았거나, 최상단이 아닌 경우
-	if (itemCount == 0 || itemCount <= visibleCount || topIndex != 0)
-		return;
-
-	static ULONGLONG lastScrollUpTime = 0;
-	ULONGLONG now = GetTickCount64();
-	const ULONGLONG scrollCooldownMs = 2000;
-
-	if (now - lastScrollUpTime < scrollCooldownMs)
-		return;
-
-	lastScrollUpTime = now;
-
-	// 현재 chatList가 최상단인지 확인
-	if (chatList.GetTopIndex() == 0)
-	{
-		Protocol::C_SCROLL_UP pkt;
-		pkt.set_oldest_message_id(GServerSessionManager->GetOldestMessageId());
-
-		auto sendBuffer = ServerPacketHandler::MakeSendBuffer(pkt);
-		_serverSession->Send(sendBuffer);
-	}
-}

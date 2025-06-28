@@ -152,7 +152,7 @@ struct S_SPAWNDefaultTypeInternal {
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 S_SPAWNDefaultTypeInternal _S_SPAWN_default_instance_;
 PROTOBUF_CONSTEXPR S_DESPAWN::S_DESPAWN(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.player_id_)*/uint64_t{0u}
+    /*decltype(_impl_.player_id_)*/int64_t{0}
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct S_DESPAWNDefaultTypeInternal {
   PROTOBUF_CONSTEXPR S_DESPAWNDefaultTypeInternal()
@@ -356,7 +356,7 @@ const char descriptor_table_protodef_Protocol_2eproto[] PROTOBUF_SECTION_VARIABL
   ".Protocol.RequestHistory\"\t\n\007C_LEAVE\"\t\n\007S"
   "_LEAVE\"0\n\007S_SPAWN\022%\n\007players\030\001 \003(\0132\024.Pro"
   "tocol.PlayerInfo\"\036\n\tS_DESPAWN\022\021\n\tplayer_"
-  "id\030\001 \001(\004\"(\n\013C_SCROLL_UP\022\031\n\021oldest_messag"
+  "id\030\001 \001(\003\"(\n\013C_SCROLL_UP\022\031\n\021oldest_messag"
   "e_id\030\001 \001(\003\"\033\n\006C_PONG\022\021\n\ttimestamp\030\001 \001(\003\""
   "\033\n\006S_PING\022\021\n\ttimestamp\030\001 \001(\003b\006proto3"
   ;
@@ -2163,7 +2163,7 @@ inline void S_DESPAWN::SharedCtor(
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.player_id_){uint64_t{0u}}
+      decltype(_impl_.player_id_){int64_t{0}}
     , /*decltype(_impl_._cached_size_)*/{}
   };
 }
@@ -2191,7 +2191,7 @@ void S_DESPAWN::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  _impl_.player_id_ = uint64_t{0u};
+  _impl_.player_id_ = int64_t{0};
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -2201,7 +2201,7 @@ const char* S_DESPAWN::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // uint64 player_id = 1;
+      // int64 player_id = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
           _impl_.player_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
@@ -2238,10 +2238,10 @@ uint8_t* S_DESPAWN::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // uint64 player_id = 1;
+  // int64 player_id = 1;
   if (this->_internal_player_id() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(1, this->_internal_player_id(), target);
+    target = ::_pbi::WireFormatLite::WriteInt64ToArray(1, this->_internal_player_id(), target);
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -2260,9 +2260,9 @@ size_t S_DESPAWN::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // uint64 player_id = 1;
+  // int64 player_id = 1;
   if (this->_internal_player_id() != 0) {
-    total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_player_id());
+    total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_player_id());
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);

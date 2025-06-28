@@ -18,23 +18,20 @@ public:
 	void Leave(GameSessionRef gameSession, PlayerRef player);
 
 	void Broadcast(SendBufferRef sendBuffer, int64 exceptId = 0);
-	void BroadcastChat(PlayerRef sender, string message, int64 serial);
-	void BroadcastSysMessage(string message, GameSessionRef gameSession);
+	void BroadcastChat(string message, PlayerRef sender, string name);
 
 	void SendMergeChat(GameSessionRef gameSession, int64 startMessageId);
+	void SendCacheChat(GameSessionRef gameSession);
 	void SendLoginFail(GameSessionRef gameSession, Protocol::Cause cause, string msg);
 
 	void DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, string name, int64 lastSerial = 0);
-	void DBSaveMessage(DBConnection* dbConn, PlayerRef sender, wstring msg, int64 serial, int32 retryCount);
+	void DBSaveMessage(DBConnection* dbConn, PlayerRef sender, wstring msg, int64 serial, int32 retryCount, vector<int64> receiverIds);
 	void DBLoadServerInit(DBConnection* dbConn);
 	void DBLoadChatFromMessageId(DBConnection* dbConn, GameSessionRef session, int64 messageId, Protocol::RequestHistory request);
 
-	void AddUpdateMessageId(int64 messageId);
-
 	void CleanupPlayers();
-	void CleanupMessages();
-	void UpdateCache();
-	void UpdateUserMessageId(int64 messageId);
+	void UpdateCache(int64 serial, int64 messageId);
+	void UpdateUserMessageId(vector<int64> receiverIds, int64 messageId);
 
 	void BroadcastPing();
 	void CheckPingTimeout();
@@ -50,8 +47,6 @@ public:
 	unordered_map<int64, PlayerRef>	_players;
 	unordered_map<int64, int64>	_lastSentMessageIdPerUser;
 	deque<Protocol::ChatMessage> _chatCache;
-	vector<int64> _pendingUpdateMessageId;
-	vector<int64> _pendingRemoveMessage;
 
 	int64 _lastMessageId = 0;
 	//Vector<GameSessionRef>	_sessions;

@@ -24,8 +24,6 @@ void Room::Update()
 	if (now >= _nextCleanupTime)
 	{
 		CleanupPlayers();                // 죽은 세션 정리
-		CleanupMessages();
-		UpdateCache();
 		_nextCleanupTime = now + 1000;
 	}
 
@@ -92,12 +90,19 @@ void Room::Enter(GameSessionRef gameSession, int64 messageId)
 	}
 
 	if (messageId == 0)
-		GRoom->DoDBAsync(&Room::DBLoadChatFromMessageId, gameSession, static_cast<int64>(0), Protocol::RequestHistory::REQUEST_RESET);
+	{
+		if (_chatCache.empty())
+		{
+			const string& message = u8"[" + player->_info.name() + u8"] 님이 입장하셨습니다.";
+			BroadcastChat(message, player, "SYSTEM");
+		}
+		else
+			GRoom->DoAsync(&Room::SendCacheChat, gameSession);
+	}		
 	else
 	{
-		if (messageId != _lastSentMessageIdPerUser[player->_info.player_id()])
-			messageId = _lastSentMessageIdPerUser[player->_info.player_id()];
-		GRoom->DoAsync(&Room::SendMergeChat, gameSession, messageId); // reset -> cache 보내기
+		messageId = _lastSentMessageIdPerUser[player->_info.player_id()];
+		GRoom->DoAsync(&Room::SendMergeChat, gameSession, messageId + 1); // reset -> cache 보내기
 	}
 }
 
@@ -108,7 +113,7 @@ void Room::Leave(GameSessionRef gameSession, PlayerRef player)
 		Protocol::S_LEAVE pkt;
 
 		std::string leaveMsg = u8"[" + player->_info.name() + u8"] 님이 채팅방을 나갔습니다.";
-		BroadcastSysMessage(leaveMsg, gameSession);
+		BroadcastChat(leaveMsg, player, "SYSTEM");
 
 		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(pkt);
 
@@ -144,56 +149,48 @@ void Room::Broadcast(SendBufferRef sendBuffer, int64 exceptId)
 	}
 }
 
-void Room::BroadcastChat(PlayerRef sender, string message, int64 serial)
+void Room::BroadcastChat(string message, PlayerRef sender, string name)
 {
+	int64 serial = GetNextSerialId();
+
 	Protocol::ChatMessage chatMsg;
 	chatMsg.set_message_id(-1); // 혹은 메시지 순번
 	chatMsg.set_serial_id(serial);            // C_CHAT에서 지정
-	chatMsg.set_player_id(sender->_info.player_id());
-	chatMsg.set_name(sender->_info.name());
+	if (name == "SYSTEM")
+		chatMsg.set_player_id(0);
+	else
+		chatMsg.set_player_id(sender->_info.player_id());
+	chatMsg.set_name(name);
 	chatMsg.set_message(message);
 	chatMsg.set_timestamp(Convert::GetCurrentEpochMilli());
 
-	// Room 내 JobQueue에서 안전하게 처리됨
 	_chatCache.push_back(chatMsg);
-	if (_chatCache.size() > 10)
-	{
-		_pendingRemoveMessage.push_back(_chatCache.front().message_id());
-	}
 
 	Protocol::S_CHAT pkt;
 	*pkt.mutable_message() = chatMsg;
-
 	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(pkt);
-	Broadcast(sendBuffer);
+
+	vector<int64> receiverIds;
+
+	for (auto& [id, player] : _players)
+	{
+		if (auto session = player->ownerSession.lock())
+		{
+			session->Send(sendBuffer);
+			receiverIds.push_back(id);
+		}
+	}
+	int32 retryCount = 0;
+	wstring wMessage = Convert::UTF8ToWStringDynamic(message);
+	DoDBAsync(&Room::DBSaveMessage, sender, wMessage, serial, retryCount, receiverIds);
 }
 
-void Room::BroadcastSysMessage(string message, GameSessionRef gameSession)
+void Room::SendCacheChat(GameSessionRef gameSession)
 {
-	Protocol::S_CHAT chatPkt;
+	if (_chatCache.empty())
+		return;
 
-	Protocol::ChatMessage* chatMsg = chatPkt.mutable_message();
-	chatMsg->set_message_id(-1); // 서버에서 DB 저장 시 ID 생성되면 이후 채워줄 수 있음
-	chatMsg->set_serial_id(GetNextSerialId()); // Room 내 채팅 순번
-	chatMsg->set_player_id(0);
-	chatMsg->set_name("SYSTEM");
-
-	chatMsg->set_message(message);
-	chatMsg->set_timestamp(Convert::GetCurrentEpochMilli());
-
-	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(chatPkt);
-	wstring wMessage = Convert::UTF8ToWStringDynamic(message);
-	int32 retryCount = 0;
-	int64 serial = _currentChatSerial;
-	PlayerRef player = gameSession->_currentPlayer;
-	GRoom->DoDBAsync(&Room::DBSaveMessage, player, wMessage, serial, retryCount);
-	Broadcast(sendBuffer, (int64)0);
-
-	_chatCache.push_back(*chatMsg);
-	if (_chatCache.size() > 10)
-	{
-		_pendingRemoveMessage.push_back(_chatCache.front().message_id());
-	}
+	SendMergeChat(gameSession, _chatCache.front().message_id());
 }
 
 void Room::SendMergeChat(GameSessionRef gameSession, int64 startMessageId)
@@ -215,7 +212,7 @@ void Room::SendMergeChat(GameSessionRef gameSession, int64 startMessageId)
 
 	for (auto& msg : _chatCache)
 	{
-		if (!startCopying && msg.message_id() > startMessageId)
+		if (!startCopying && msg.message_id() >= startMessageId)
 			startCopying = true;
 
 		if (startCopying)
@@ -225,17 +222,14 @@ void Room::SendMergeChat(GameSessionRef gameSession, int64 startMessageId)
 		}
 	}
 
-	int64 lastMessageId = _chatCache.back().message_id();
-
 	if (pkt.messages_size() > 0)
 	{
-		_lastSentMessageIdPerUser[gameSession->_currentPlayer->_info.player_id()];
 		auto sendBuffer = ClientPacketHandler::MakeSendBuffer(pkt);
 		gameSession->Send(sendBuffer);
 	}
 	{
-		string message = u8"[" + gameSession->_currentPlayer->_info.name() + u8"] 님이 입장하셨습니다.";
-		BroadcastSysMessage(message, gameSession);
+		const string& message = u8"[" + player->_info.name() + u8"] 님이 입장하셨습니다.";
+		BroadcastChat(message, player, "SYSTEM");
 	}
 }
 
@@ -313,7 +307,7 @@ void Room::DBProcessLogin(DBConnection* dbConn, GameSessionRef gameSession, stri
 	GRoom->DoAsync(&Room::Enter, gameSession, messageId);
 }
 
-void Room::DBSaveMessage(DBConnection* dbConn, PlayerRef sender, wstring wMsgCopy, int64 serial, int32 retryCount)
+void Room::DBSaveMessage(DBConnection* dbConn, PlayerRef sender, wstring wMsgCopy, int64 serial, int32 retryCount, vector<int64> receiverIds)
 {
 	SP::InsertChatMessage insert(*dbConn);
 	insert.In_Player_id(sender->_info.player_id());
@@ -327,7 +321,7 @@ void Room::DBSaveMessage(DBConnection* dbConn, PlayerRef sender, wstring wMsgCop
 		// TODO : Job 재등록
 		if (retryCount < 2)
 		{
-			DoDBAsync(&Room::DBSaveMessage, sender, wMsgCopy, serial, ++retryCount);
+			DoDBAsync(&Room::DBSaveMessage, sender, wMsgCopy, serial, ++retryCount, receiverIds);
 		}
 		else
 		{
@@ -343,8 +337,8 @@ void Room::DBSaveMessage(DBConnection* dbConn, PlayerRef sender, wstring wMsgCop
 	}
 	else
 	{
-		GRoom->DoAsync(&Room::AddUpdateMessageId, messageId);
-		GRoom->DoAsync(&Room::UpdateUserMessageId, messageId);
+		GRoom->DoAsync(&Room::UpdateCache, serial, messageId);
+		GRoom->DoAsync(&Room::UpdateUserMessageId, receiverIds, messageId);
 	}
 }
 
@@ -353,7 +347,7 @@ void Room::DBLoadServerInit(DBConnection* dbConn)
 	if (!_chatCache.empty())
 		return;
 
-	const int64 maxCount = 5;
+	const int64 maxCount = 10;
 	vector<Protocol::ChatMessage> dbMsgs;
 
 	// IN/OUT 바인딩에 사용할 변수들은 바인딩 함수에서 선언 및 참조 전달
@@ -376,17 +370,20 @@ void Room::DBLoadServerInit(DBConnection* dbConn)
 		return;
 	}
 
-	int32 count = 0;
+	_chatCache.clear();
+	int64 maxSerialId = 0;
+
 	while (getMessage.Fetch())
 	{
 		Protocol::ChatMessage msg = FetchChatMessageToProto(messageIdParam, playerIdParam, messageBuffer, timestampParam, serialParam);
-		dbMsgs.push_back(std::move(msg));
-		++count;
+
+		if (msg.serial_id() > maxSerialId)
+			maxSerialId = msg.serial_id();
+
+		_chatCache.push_back(std::move(msg));  // 바로 Room 캐시에 저장
 	}
 
-	_chatCache.clear();
-	for (auto& m : dbMsgs)
-		_chatCache.push_back(std::move(m));
+	_currentChatSerial = maxSerialId + 1;
 }
 
 // messageId로부터 메시지 로드.
@@ -395,7 +392,11 @@ void Room::DBLoadChatFromMessageId(DBConnection* dbConn, GameSessionRef session,
 	if (_chatCache.empty())
 		return;
 
-	const int64 maxCount = 5;
+	PlayerRef player = session->_currentPlayer;
+	if (player == nullptr)
+		return;
+
+	const int64 maxCount = 10;
 	vector<Protocol::ChatMessage> dbMsgs;
 
 	// IN/OUT 바인딩에 사용할 변수들은 바인딩 함수에서 선언 및 참조 전달
@@ -408,16 +409,8 @@ void Room::DBLoadChatFromMessageId(DBConnection* dbConn, GameSessionRef session,
 	SP::GetRecentChatMessagesFromId getMessage(*dbConn);
 
 	// IN/OUT 파라미터 바인딩
-	if (messageId == 0 || request == Protocol::RequestHistory::REQUEST_RESET)
-	{
-		BindParamsForLoadChatFromMessageId(getMessage, INT64_MAX, maxCount,
-			messageIdParam, playerIdParam, messageBuffer, timestampParam, serialParam);
-	}
-	else
-	{
-		BindParamsForLoadChatFromMessageId(getMessage, messageId, maxCount,
-			messageIdParam, playerIdParam, messageBuffer, timestampParam, serialParam);
-	}
+	BindParamsForLoadChatFromMessageId(getMessage, messageId, maxCount,
+		messageIdParam, playerIdParam, messageBuffer, timestampParam, serialParam);
 
 	if (!getMessage.Execute())
 	{
@@ -425,12 +418,10 @@ void Room::DBLoadChatFromMessageId(DBConnection* dbConn, GameSessionRef session,
 		return;
 	}
 
-	int32 count = 0;
 	while (getMessage.Fetch())
 	{
 		Protocol::ChatMessage msg = FetchChatMessageToProto(messageIdParam, playerIdParam, messageBuffer, timestampParam, serialParam);
 		dbMsgs.push_back(std::move(msg));
-		++count;
 	}
 
 	Protocol::S_CHAT_HISTORY pkt;
@@ -439,22 +430,16 @@ void Room::DBLoadChatFromMessageId(DBConnection* dbConn, GameSessionRef session,
 	for (const auto& msg : dbMsgs)
 		*pkt.add_messages() = msg;
 
-	//if (request == Protocol::REQUEST_RESET || request == Protocol::REQUEST_NEWEST)
-	//{
-	//	auto it = dbMsgs.rbegin();
-	//	_lastSentMessageIdPerUser[session->_currentPlayer->_info.player_id()] = it->message_id();
-	//}
-
 	auto sendBuffer = ClientPacketHandler::MakeSendBuffer(pkt);
 	session->Send(sendBuffer);
 
 	if (request == Protocol::REQUEST_OLDEST)
 		return;
 
-	if (session && session->_currentPlayer)
+	if (session)
 	{
-		string message = u8"[" + session->_currentPlayer->_info.name() + u8"] 님이 입장하셨습니다.";
-		GRoom->DoAsync(&Room::BroadcastSysMessage, message, session);
+		const string& message = u8"[" + player->_info.name() + u8"] 님이 입장하셨습니다.";
+		GRoom->DoAsync(&Room::BroadcastChat, message, player, string("SYSTEM"));
 	}
 }
 
@@ -501,44 +486,32 @@ void Room::CleanupPlayers()
 	}
 }
 
-void Room::CleanupMessages()
+void Room::UpdateCache(int64 serial, int64 messageId)
 {
-	for (int32 i = 0; i < _pendingRemoveMessage.size(); i++)
+	for (auto& msg : _chatCache)
 	{
-		if (_chatCache.empty())
-			return;
-		_chatCache.pop_front();
-	}
-
-	_pendingRemoveMessage.clear();
-}
-
-void Room::UpdateCache()
-{
-	int32 index = 0;
-	for (auto& chat : _chatCache)
-	{
-		if (chat.message_id() != -1)
-			continue;
-
-		if (index < static_cast<int32>(_pendingUpdateMessageId.size()))
+		if (msg.serial_id() == serial)
 		{
-			chat.set_message_id(_pendingUpdateMessageId[index++]);
-		}
-		else
-		{
+			msg.set_message_id(messageId);
 			break;
 		}
 	}
-
-	_pendingUpdateMessageId.clear();
+	
+	while (_chatCache.size() > 10)
+	{
+		if (_chatCache.front().message_id() == -1)
+			return;
+		_chatCache.pop_front();
+	}
 }
 
-void Room::UpdateUserMessageId(int64 messageId)
+void Room::UpdateUserMessageId(vector<int64> receiverIds, int64 messageId)
 {
-	for (auto& [i, p] : _players)
+	for (auto& id : receiverIds)
 	{
-		_lastSentMessageIdPerUser[i] = messageId;
+		int64& last = _lastSentMessageIdPerUser[id];
+		if (last < messageId)
+			last = messageId;
 	}
 }
 
@@ -593,9 +566,4 @@ void Room::Kick(PlayerRef player)
 int64 Room::GetNextSerialId()
 {
 	return _currentChatSerial++;
-}
-
-void Room::AddUpdateMessageId(int64 messageId)
-{
-	_pendingUpdateMessageId.push_back(messageId);
 }

@@ -1743,13 +1743,13 @@ class S_DESPAWN final :
   enum : int {
     kPlayerIdFieldNumber = 1,
   };
-  // uint64 player_id = 1;
+  // int64 player_id = 1;
   void clear_player_id();
-  uint64_t player_id() const;
-  void set_player_id(uint64_t value);
+  int64_t player_id() const;
+  void set_player_id(int64_t value);
   private:
-  uint64_t _internal_player_id() const;
-  void _internal_set_player_id(uint64_t value);
+  int64_t _internal_player_id() const;
+  void _internal_set_player_id(int64_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.S_DESPAWN)
@@ -1760,7 +1760,7 @@ class S_DESPAWN final :
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   struct Impl_ {
-    uint64_t player_id_;
+    int64_t player_id_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -2765,22 +2765,22 @@ S_SPAWN::players() const {
 
 // S_DESPAWN
 
-// uint64 player_id = 1;
+// int64 player_id = 1;
 inline void S_DESPAWN::clear_player_id() {
-  _impl_.player_id_ = uint64_t{0u};
+  _impl_.player_id_ = int64_t{0};
 }
-inline uint64_t S_DESPAWN::_internal_player_id() const {
+inline int64_t S_DESPAWN::_internal_player_id() const {
   return _impl_.player_id_;
 }
-inline uint64_t S_DESPAWN::player_id() const {
+inline int64_t S_DESPAWN::player_id() const {
   // @@protoc_insertion_point(field_get:Protocol.S_DESPAWN.player_id)
   return _internal_player_id();
 }
-inline void S_DESPAWN::_internal_set_player_id(uint64_t value) {
+inline void S_DESPAWN::_internal_set_player_id(int64_t value) {
   
   _impl_.player_id_ = value;
 }
-inline void S_DESPAWN::set_player_id(uint64_t value) {
+inline void S_DESPAWN::set_player_id(int64_t value) {
   _internal_set_player_id(value);
   // @@protoc_insertion_point(field_set:Protocol.S_DESPAWN.player_id)
 }

@@ -198,13 +198,13 @@ class PlayerInfo final :
   std::string* _internal_mutable_name();
   public:
 
-  // uint64 player_id = 1;
+  // int64 player_id = 1;
   void clear_player_id();
-  uint64_t player_id() const;
-  void set_player_id(uint64_t value);
+  int64_t player_id() const;
+  void set_player_id(int64_t value);
   private:
-  uint64_t _internal_player_id() const;
-  void _internal_set_player_id(uint64_t value);
+  int64_t _internal_player_id() const;
+  void _internal_set_player_id(int64_t value);
   public:
 
   // @@protoc_insertion_point(class_scope:Protocol.PlayerInfo)
@@ -216,7 +216,7 @@ class PlayerInfo final :
   typedef void DestructorSkippable_;
   struct Impl_ {
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr name_;
-    uint64_t player_id_;
+    int64_t player_id_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
   union { Impl_ _impl_; };
@@ -398,13 +398,13 @@ class ChatMessage final :
   void _internal_set_serial_id(int64_t value);
   public:
 
-  // uint64 player_id = 4;
+  // int64 player_id = 4;
   void clear_player_id();
-  uint64_t player_id() const;
-  void set_player_id(uint64_t value);
+  int64_t player_id() const;
+  void set_player_id(int64_t value);
   private:
-  uint64_t _internal_player_id() const;
-  void _internal_set_player_id(uint64_t value);
+  int64_t _internal_player_id() const;
+  void _internal_set_player_id(int64_t value);
   public:
 
   // optional int64 timestamp = 6;
@@ -434,7 +434,7 @@ class ChatMessage final :
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr name_;
     int64_t message_id_;
     int64_t serial_id_;
-    uint64_t player_id_;
+    int64_t player_id_;
     int64_t timestamp_;
   };
   union { Impl_ _impl_; };
@@ -451,22 +451,22 @@ class ChatMessage final :
 #endif  // __GNUC__
 // PlayerInfo
 
-// uint64 player_id = 1;
+// int64 player_id = 1;
 inline void PlayerInfo::clear_player_id() {
-  _impl_.player_id_ = uint64_t{0u};
+  _impl_.player_id_ = int64_t{0};
 }
-inline uint64_t PlayerInfo::_internal_player_id() const {
+inline int64_t PlayerInfo::_internal_player_id() const {
   return _impl_.player_id_;
 }
-inline uint64_t PlayerInfo::player_id() const {
+inline int64_t PlayerInfo::player_id() const {
   // @@protoc_insertion_point(field_get:Protocol.PlayerInfo.player_id)
   return _internal_player_id();
 }
-inline void PlayerInfo::_internal_set_player_id(uint64_t value) {
+inline void PlayerInfo::_internal_set_player_id(int64_t value) {
   
   _impl_.player_id_ = value;
 }
-inline void PlayerInfo::set_player_id(uint64_t value) {
+inline void PlayerInfo::set_player_id(int64_t value) {
   _internal_set_player_id(value);
   // @@protoc_insertion_point(field_set:Protocol.PlayerInfo.player_id)
 }
@@ -615,22 +615,22 @@ inline void ChatMessage::set_allocated_message(std::string* message) {
   // @@protoc_insertion_point(field_set_allocated:Protocol.ChatMessage.message)
 }
 
-// uint64 player_id = 4;
+// int64 player_id = 4;
 inline void ChatMessage::clear_player_id() {
-  _impl_.player_id_ = uint64_t{0u};
+  _impl_.player_id_ = int64_t{0};
 }
-inline uint64_t ChatMessage::_internal_player_id() const {
+inline int64_t ChatMessage::_internal_player_id() const {
   return _impl_.player_id_;
 }
-inline uint64_t ChatMessage::player_id() const {
+inline int64_t ChatMessage::player_id() const {
   // @@protoc_insertion_point(field_get:Protocol.ChatMessage.player_id)
   return _internal_player_id();
 }
-inline void ChatMessage::_internal_set_player_id(uint64_t value) {
+inline void ChatMessage::_internal_set_player_id(int64_t value) {
   
   _impl_.player_id_ = value;
 }
-inline void ChatMessage::set_player_id(uint64_t value) {
+inline void ChatMessage::set_player_id(int64_t value) {
   _internal_set_player_id(value);
   // @@protoc_insertion_point(field_set:Protocol.ChatMessage.player_id)
 }

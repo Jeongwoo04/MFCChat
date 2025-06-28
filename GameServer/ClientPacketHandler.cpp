@@ -60,16 +60,9 @@ bool Handle_C_CHAT(PacketSessionRef& session, Protocol::C_CHAT& pkt)
 
 	if (player == nullptr)
 		return false;
-
-	int64 serial = GRoom->GetNextSerialId();
 		
-	const string& sendMsg = u8"[" + player->_info.name() + u8"]:" + pkt.message();
-	wstring wMessage = Convert::UTF8ToWStringDynamic(sendMsg);
-
-	int32 retryCount = 0;
-	GRoom->DoDBAsync(&Room::DBSaveMessage, player, wMessage, serial, retryCount);
-
-	GRoom->DoAsync(&Room::BroadcastChat, player, sendMsg, serial);
+	const string& message = u8"[" + player->_info.name() + u8"]:" + pkt.message();
+	GRoom->DoAsync(&Room::BroadcastChat, message, player, player->_info.name());
 
 	return true;
 }

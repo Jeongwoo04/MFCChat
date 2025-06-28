@@ -26,7 +26,7 @@ public:
 private:
 	USE_LOCK;
 	unordered_map<uint64, ServerSessionRef>	_sessions;
-	int64 _lastRecvMessageId;
+	int64 _lastRecvMessageId = 0;
 	int64 _oldestMessageId = INT64_MAX;
 	bool _isReconnected = false;
 };

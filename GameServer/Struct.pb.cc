@@ -24,7 +24,7 @@ namespace Protocol {
 PROTOBUF_CONSTEXPR PlayerInfo::PlayerInfo(
     ::_pbi::ConstantInitialized): _impl_{
     /*decltype(_impl_.name_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
-  , /*decltype(_impl_.player_id_)*/uint64_t{0u}
+  , /*decltype(_impl_.player_id_)*/int64_t{0}
   , /*decltype(_impl_._cached_size_)*/{}} {}
 struct PlayerInfoDefaultTypeInternal {
   PROTOBUF_CONSTEXPR PlayerInfoDefaultTypeInternal()
@@ -43,7 +43,7 @@ PROTOBUF_CONSTEXPR ChatMessage::ChatMessage(
   , /*decltype(_impl_.name_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
   , /*decltype(_impl_.message_id_)*/int64_t{0}
   , /*decltype(_impl_.serial_id_)*/int64_t{0}
-  , /*decltype(_impl_.player_id_)*/uint64_t{0u}
+  , /*decltype(_impl_.player_id_)*/int64_t{0}
   , /*decltype(_impl_.timestamp_)*/int64_t{0}} {}
 struct ChatMessageDefaultTypeInternal {
   PROTOBUF_CONSTEXPR ChatMessageDefaultTypeInternal()
@@ -99,10 +99,10 @@ static const ::_pb::Message* const file_default_instances[] = {
 
 const char descriptor_table_protodef_Struct_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
   "\n\014Struct.proto\022\010Protocol\"-\n\nPlayerInfo\022\021"
-  "\n\tplayer_id\030\001 \001(\004\022\014\n\004name\030\002 \001(\t\"\214\001\n\013Chat"
+  "\n\tplayer_id\030\001 \001(\003\022\014\n\004name\030\002 \001(\t\"\214\001\n\013Chat"
   "Message\022\022\n\nmessage_id\030\001 \001(\003\022\021\n\tserial_id"
   "\030\002 \001(\003\022\017\n\007message\030\003 \001(\t\022\021\n\tplayer_id\030\004 \001"
-  "(\004\022\014\n\004name\030\005 \001(\t\022\026\n\ttimestamp\030\006 \001(\003H\000\210\001\001"
+  "(\003\022\014\n\004name\030\005 \001(\t\022\026\n\ttimestamp\030\006 \001(\003H\000\210\001\001"
   "B\014\n\n_timestampb\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Struct_2eproto_once;
@@ -161,7 +161,7 @@ inline void PlayerInfo::SharedCtor(
   (void)is_message_owned;
   new (&_impl_) Impl_{
       decltype(_impl_.name_){}
-    , decltype(_impl_.player_id_){uint64_t{0u}}
+    , decltype(_impl_.player_id_){int64_t{0}}
     , /*decltype(_impl_._cached_size_)*/{}
   };
   _impl_.name_.InitDefault();
@@ -195,7 +195,7 @@ void PlayerInfo::Clear() {
   (void) cached_has_bits;
 
   _impl_.name_.ClearToEmpty();
-  _impl_.player_id_ = uint64_t{0u};
+  _impl_.player_id_ = int64_t{0};
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -205,7 +205,7 @@ const char* PlayerInfo::_InternalParse(const char* ptr, ::_pbi::ParseContext* ct
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // uint64 player_id = 1;
+      // int64 player_id = 1;
       case 1:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
           _impl_.player_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
@@ -252,10 +252,10 @@ uint8_t* PlayerInfo::_InternalSerialize(
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // uint64 player_id = 1;
+  // int64 player_id = 1;
   if (this->_internal_player_id() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(1, this->_internal_player_id(), target);
+    target = ::_pbi::WireFormatLite::WriteInt64ToArray(1, this->_internal_player_id(), target);
   }
 
   // string name = 2;
@@ -291,9 +291,9 @@ size_t PlayerInfo::ByteSizeLong() const {
         this->_internal_name());
   }
 
-  // uint64 player_id = 1;
+  // int64 player_id = 1;
   if (this->_internal_player_id() != 0) {
-    total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_player_id());
+    total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_player_id());
   }
 
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
@@ -415,7 +415,7 @@ inline void ChatMessage::SharedCtor(
     , decltype(_impl_.name_){}
     , decltype(_impl_.message_id_){int64_t{0}}
     , decltype(_impl_.serial_id_){int64_t{0}}
-    , decltype(_impl_.player_id_){uint64_t{0u}}
+    , decltype(_impl_.player_id_){int64_t{0}}
     , decltype(_impl_.timestamp_){int64_t{0}}
   };
   _impl_.message_.InitDefault();
@@ -496,7 +496,7 @@ const char* ChatMessage::_InternalParse(const char* ptr, ::_pbi::ParseContext* c
         } else
           goto handle_unusual;
         continue;
-      // uint64 player_id = 4;
+      // int64 player_id = 4;
       case 4:
         if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 32)) {
           _impl_.player_id_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
@@ -575,10 +575,10 @@ uint8_t* ChatMessage::_InternalSerialize(
         3, this->_internal_message(), target);
   }
 
-  // uint64 player_id = 4;
+  // int64 player_id = 4;
   if (this->_internal_player_id() != 0) {
     target = stream->EnsureSpace(target);
-    target = ::_pbi::WireFormatLite::WriteUInt64ToArray(4, this->_internal_player_id(), target);
+    target = ::_pbi::WireFormatLite::WriteInt64ToArray(4, this->_internal_player_id(), target);
   }
 
   // string name = 5;
@@ -637,9 +637,9 @@ size_t ChatMessage::ByteSizeLong() const {
     total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_serial_id());
   }
 
-  // uint64 player_id = 4;
+  // int64 player_id = 4;
   if (this->_internal_player_id() != 0) {
-    total_size += ::_pbi::WireFormatLite::UInt64SizePlusOne(this->_internal_player_id());
+    total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(this->_internal_player_id());
   }
 
   // optional int64 timestamp = 6;

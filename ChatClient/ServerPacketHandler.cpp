@@ -71,9 +71,9 @@ bool Handle_S_CHAT(PacketSessionRef& session, Protocol::S_CHAT& pkt)
 
 	int64 serialId = chatMsg->serial_id();
 	int64 messageId = chatMsg->message_id();
-	string message = chatMsg->message();
-	uint64 playerId = chatMsg->player_id();
-	string playerName = chatMsg->name();
+	const string& message = chatMsg->message();
+	int64 playerId = chatMsg->player_id();
+	const string& playerName = chatMsg->name();
 
 	if (messageId > GServerSessionManager->GetLastMessageId())
 		GServerSessionManager->SetLastMessageId(messageId);
@@ -113,9 +113,9 @@ bool Handle_S_CHAT_HISTORY(PacketSessionRef& session, Protocol::S_CHAT_HISTORY& 
 
 			int64 serialId = chat.serial_id();
 			int64 messageId = chat.message_id();
-			string message = chat.message();
-			uint64 playerId = chat.player_id();
-			string playerName = chat.name();
+			const string& message = chat.message();
+			int64 playerId = chat.player_id();
+			const string& playerName = chat.name();
 
 			if (messageId > GServerSessionManager->GetLastMessageId())
 				GServerSessionManager->SetLastMessageId(messageId);
@@ -134,9 +134,9 @@ bool Handle_S_CHAT_HISTORY(PacketSessionRef& session, Protocol::S_CHAT_HISTORY& 
 		{
 			int64 serialId = chat.serial_id();
 			int64 messageId = chat.message_id();
-			string message = chat.message();
-			uint64 playerId = chat.player_id();
-			string playerName = chat.name();
+			const string& message = chat.message();
+			int64 playerId = chat.player_id();
+			const string& playerName = chat.name();
 
 			if (messageId > GServerSessionManager->GetLastMessageId())
 				GServerSessionManager->SetLastMessageId(messageId);
